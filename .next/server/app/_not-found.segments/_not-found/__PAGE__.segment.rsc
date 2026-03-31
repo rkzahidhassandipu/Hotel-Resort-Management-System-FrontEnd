@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[22016,["/_next/static/chunks/0hdmq_smm16a1.js","/_next/static/chunks/0w2x~-3f4_5s8.js","/_next/static/chunks/0ka051yepewro.js"],""]
+3:I[25725,["/_next/static/chunks/0hdmq_smm16a1.js","/_next/static/chunks/0w2x~-3f4_5s8.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"min-h-screen bg-[#0B0C10] flex items-center justify-center text-center px-6","children":["$","div",null,{"children":[["$","p",null,{"className":"text-[#C8102E] text-xs font-sans tracking-[0.3em] uppercase mb-4","children":"404 — Not Found"}],["$","h1",null,{"className":"font-display text-5xl text-white mb-4","children":"Page Not Found"}],["$","p",null,{"className":"text-white/40 font-sans mb-8 max-w-md mx-auto","children":"The page you are looking for does not exist or has been moved."}],["$","$L2",null,{"href":"/","className":"inline-flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white font-sans font-medium px-7 py-3 rounded transition-all","children":"Return Home"}]]}]}],[["$","script","script-0",{"src":"/_next/static/chunks/0ka051yepewro.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"CmIr3ifPkgBJ9Sxp9mun1"}
+5:null

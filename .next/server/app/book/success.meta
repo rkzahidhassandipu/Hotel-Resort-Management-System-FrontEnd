@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(commonLayout)/layout,_N_T_/(commonLayout)/book/layout,_N_T_/(commonLayout)/book/success/layout,_N_T_/(commonLayout)/book/success/page,_N_T_/book/success"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGNvbW1vbkxheW91dCk/book/success/__PAGE__",
+    "/!KGNvbW1vbkxheW91dCk/book/success",
+    "/!KGNvbW1vbkxheW91dCk/book",
+    "/!KGNvbW1vbkxheW91dCk",
+    "/_index",
+    "/_head"
+  ]
+}

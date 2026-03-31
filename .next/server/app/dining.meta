@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(commonLayout)/layout,_N_T_/(commonLayout)/dining/layout,_N_T_/(commonLayout)/dining/page,_N_T_/dining"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGNvbW1vbkxheW91dCk/dining/__PAGE__",
+    "/!KGNvbW1vbkxheW91dCk/dining",
+    "/!KGNvbW1vbkxheW91dCk",
+    "/_index",
+    "/_head"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(dashboardLayout)/layout,_N_T_/(dashboardLayout)/manager/layout,_N_T_/(dashboardLayout)/manager/dashboard/layout,_N_T_/(dashboardLayout)/manager/dashboard/bookings/layout,_N_T_/(dashboardLayout)/manager/dashboard/bookings/page,_N_T_/manager/dashboard/bookings"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGRhc2hib2FyZExheW91dCk/manager/dashboard/bookings/__PAGE__",
+    "/!KGRhc2hib2FyZExheW91dCk/manager/dashboard/bookings",
+    "/!KGRhc2hib2FyZExheW91dCk/manager/dashboard",
+    "/!KGRhc2hib2FyZExheW91dCk/manager",
+    "/!KGRhc2hib2FyZExheW91dCk",
+    "/_index",
+    "/_head"
+  ]
+}

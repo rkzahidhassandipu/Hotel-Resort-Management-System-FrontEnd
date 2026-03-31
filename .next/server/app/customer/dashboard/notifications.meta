@@ -1,0 +1,18 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(dashboardLayout)/layout,_N_T_/(dashboardLayout)/customer/layout,_N_T_/(dashboardLayout)/customer/dashboard/layout,_N_T_/(dashboardLayout)/customer/dashboard/notifications/layout,_N_T_/(dashboardLayout)/customer/dashboard/notifications/page,_N_T_/customer/dashboard/notifications"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGRhc2hib2FyZExheW91dCk/customer/dashboard/notifications/__PAGE__",
+    "/!KGRhc2hib2FyZExheW91dCk/customer/dashboard/notifications",
+    "/!KGRhc2hib2FyZExheW91dCk/customer/dashboard",
+    "/!KGRhc2hib2FyZExheW91dCk/customer",
+    "/!KGRhc2hib2FyZExheW91dCk",
+    "/_index",
+    "/_head"
+  ]
+}
