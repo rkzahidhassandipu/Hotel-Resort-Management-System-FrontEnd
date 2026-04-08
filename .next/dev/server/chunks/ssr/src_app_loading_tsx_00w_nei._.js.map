@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/rkraz/Downloads/hotel-frontend-final/hotel-frontend/src/app/loading.tsx"],"sourcesContent":["export default function Loading() {\n  return (\n    <div className=\"min-h-screen bg-[#0B0C10] flex items-center justify-center\">\n      <div className=\"flex flex-col items-center gap-4\">\n        <div className=\"relative w-12 h-12\">\n          <div className=\"absolute inset-0 rounded-full border-2 border-[#C8102E]/20 animate-ping\" />\n          <div className=\"w-12 h-12 rounded-full bg-[#C8102E] flex items-center justify-center\">\n            <span className=\"text-white font-display font-bold text-xl\">L</span>\n          </div>\n        </div>\n        <p className=\"text-white/30 text-xs font-sans tracking-widest uppercase\">Loading</p>\n      </div>\n    </div>\n  );\n}\n"],"names":["Loading","className"],"mappings":";;;;;;AAAe,SAASA;IACtB,qBACE,8OAAC;QAAIC,WAAU;kBACb,cAAA,8OAAC;YAAIA,WAAU;;8BACb,8OAAC;oBAAIA,WAAU;;sCACb,8OAAC;4BAAIA,WAAU;;;;;;sCACf,8OAAC;4BAAIA,WAAU;sCACb,cAAA,8OAAC;gCAAKA,WAAU;0CAA4C;;;;;;;;;;;;;;;;;8BAGhE,8OAAC;oBAAEA,WAAU;8BAA4D;;;;;;;;;;;;;;;;;AAIjF"}}]
-}
