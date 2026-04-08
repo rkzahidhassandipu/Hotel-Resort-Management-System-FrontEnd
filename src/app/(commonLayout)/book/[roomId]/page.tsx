@@ -1,212 +1,321 @@
 'use client';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Calendar, Users, ArrowRight, Loader2, BedDouble } from 'lucide-react';
+import { ArrowRight, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { bookingService } from '@/service/booking.service';
 import { getCookie } from '@/lib/cookieUtils';
+
+const MONTHS = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+];
+const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function fmt(d: Date | null) {
+  if (!d) return null;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function Calendar({
+  checkIn,
+  checkOut,
+  onPick,
+}: {
+  checkIn: Date | null;
+  checkOut: Date | null;
+  onPick: (d: Date) => void;
+}) {
+  const [vy, setVy] = useState(new Date().getFullYear());
+  const [vm, setVm] = useState(new Date().getMonth());
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const firstDay = new Date(vy, vm, 1).getDay();
+  const daysInMonth = new Date(vy, vm + 1, 0).getDate();
+
+  const prev = () => {
+    if (vm === 0) { setVm(11); setVy(y => y - 1); } else setVm(m => m - 1);
+  };
+  const next = () => {
+    if (vm === 11) { setVm(0); setVy(y => y + 1); } else setVm(m => m + 1);
+  };
+
+  return (
+    <div className="bg-[#0B0C10] border border-white/8 rounded-xl p-4 mb-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={prev}
+          className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 border border-white/8 text-white/70 hover:bg-[#37EFD1]/10 hover:border-[#37EFD1]/30 hover:text-[#37EFD1] transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <span className="text-sm font-medium text-white">{MONTHS[vm]} {vy}</span>
+        <button
+          type="button"
+          onClick={next}
+          className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 border border-white/8 text-white/70 hover:bg-[#37EFD1]/10 hover:border-[#37EFD1]/30 hover:text-[#37EFD1] transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Day names */}
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
+        {DAYS.map(d => (
+          <div key={d} className="text-center text-[10px] uppercase tracking-wider text-white/30 py-1">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-0.5">
+        {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
+        {Array.from({ length: daysInMonth }).map((_, i) => {
+          const d = i + 1;
+          const dt = new Date(vy, vm, d);
+          const isPast = dt < today;
+          const isToday = dt.getTime() === today.getTime();
+          const isCIn = checkIn && dt.getTime() === checkIn.getTime();
+          const isCOut = checkOut && dt.getTime() === checkOut.getTime();
+          const inRange = checkIn && checkOut && dt > checkIn && dt < checkOut;
+
+          let cls = 'h-8 flex items-center justify-center text-[13px] rounded-lg transition-all ';
+          if (isPast)       cls += 'text-white/20 cursor-default pointer-events-none';
+          else if (isCIn)   cls += 'bg-[#37EFD1] text-[#0B0C10] font-medium rounded-r-none cursor-pointer';
+          else if (isCOut)  cls += 'bg-[#37EFD1] text-[#0B0C10] font-medium rounded-l-none cursor-pointer';
+          else if (inRange) cls += 'bg-[#37EFD1]/12 text-[#37EFD1]/90 rounded-none cursor-pointer';
+          else if (isToday) cls += 'text-[#37EFD1] font-medium cursor-pointer hover:bg-white/6';
+          else              cls += 'text-white/75 cursor-pointer hover:bg-white/6';
+
+          if (isCIn && isCOut) {
+            cls = cls.replace('rounded-r-none', '').replace('rounded-l-none', '') + ' rounded-lg';
+          }
+
+          return (
+            <button
+              key={d}
+              type="button"
+              disabled={isPast}
+              onClick={() => onPick(dt)}
+              className={cls}
+            >
+              {d}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function BookingPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const router = useRouter();
   const isLoggedIn = !!getCookie('accessToken');
 
-  const [form, setForm] = useState({
-    checkInDate: '',
-    checkOutDate: '',
-    adults: 1,
-    children: 0,
-    specialRequests: '',
-  });
+  // Calendar state
+  const [checkIn, setCheckIn] = useState<Date | null>(null);
+  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [calOpen, setCalOpen] = useState(false);
+  const [selecting, setSelecting] = useState<'in' | 'out'>('in');
+
+  // Form state
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [specialRequests, setSpecialRequests] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Calculate nights
   const nights =
-    form.checkInDate && form.checkOutDate
-      ? Math.max(
-          0,
-          Math.ceil(
-            (new Date(form.checkOutDate).getTime() - new Date(form.checkInDate).getTime()) /
-              (1000 * 60 * 60 * 24)
-          )
-        )
+    checkIn && checkOut
+      ? Math.max(0, Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
+
+  const handleDateBoxClick = (which: 'in' | 'out') => {
+    setSelecting(which);
+    setCalOpen(true);
+  };
+
+  const handlePick = (dt: Date) => {
+    if (selecting === 'in') {
+      setCheckIn(dt);
+      setCheckOut(null);
+      setSelecting('out');
+    } else {
+      if (checkIn && dt <= checkIn) {
+        // clicked before or on check-in → restart selection
+        setCheckIn(dt);
+        setCheckOut(null);
+        setSelecting('out');
+      } else {
+        setCheckOut(dt);
+        setCalOpen(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // If not logged in → redirect to login with redirect back
     if (!isLoggedIn) {
       router.push(`/login?redirect=/book/${roomId}`);
       return;
     }
 
-    if (nights < 1) {
-      setError('Check-out must be after check-in.');
+    if (!checkIn || !checkOut || nights < 1) {
+      setError('Please select valid check-in and check-out dates.');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await bookingService.create({
-        roomId,
-        checkInDate: new Date(form.checkInDate).toISOString(),
-        checkOutDate: new Date(form.checkOutDate).toISOString(),
-        adults: form.adults,
-        children: form.children,
-        specialRequests: form.specialRequests || undefined,
-      });
+      const payload = {
+        roomId: decodeURIComponent(roomId),
+        checkInDate: checkIn.toISOString(),
+        checkOutDate: checkOut.toISOString(),
+        adults,
+        children,
+        specialRequests: specialRequests.trim() || undefined,
+      };
 
-      const booking = res.data?.data || res.data;
-      // Go to confirmation + payment page
+      const res = await bookingService.create(payload);
+      const booking = res.data?.data ?? res.data;
+      if (!booking?.id) throw new Error('Invalid booking response.');
+
       router.push(`/book/${roomId}/confirm?bookingId=${booking.id}`);
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Booking failed. Please try again.';
-      setError(msg);
+    } catch (err: any) {
+      // axios interceptor may unwrap — check both shapes
+      const data = err?.response?.data ?? err?.data ?? err;
+      const fieldErrors: string | null = Array.isArray(data?.errors)
+        ? data.errors.map((e: any) => e.message).join(' · ')
+        : null;
+      setError(fieldErrors ?? data?.message ?? err?.message ?? 'Booking failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-[#0B0C10] pt-24 pb-16">
       <div className="max-w-2xl mx-auto px-6">
-        {/* Header */}
-        <div className="mb-8">
-          <p className="text-[#37EFD1] text-xs font-sans tracking-widest uppercase mb-2">
-            Reservation
-          </p>
-          <h1 className="font-display text-3xl text-white font-semibold">Book Your Stay</h1>
-          <p className="text-white/40 text-sm font-sans mt-1">
-            Room: <span className="text-white/70">{decodeURIComponent(roomId)}</span>
-          </p>
-        </div>
+        <h1 className="text-3xl text-white font-display font-semibold mb-2">Book Your Stay</h1>
+        <p className="text-[#37EFD1] text-sm mb-6">Room: {decodeURIComponent(roomId)}</p>
 
-        <div className="bg-[#1A1B21] border border-white/8 rounded-2xl overflow-hidden">
-          <div className="h-px bg-gradient-to-r from-transparent via-[#C8102E]/50 to-transparent" />
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
-            {error && (
-              <div className="bg-[#C8102E]/10 border border-[#C8102E]/20 rounded-lg px-4 py-3 text-[#C8102E] text-sm font-sans">
-                {error}
-              </div>
-            )}
-
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-white/50 text-xs font-sans uppercase tracking-widest mb-2 block">
-                  Check-in
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                  <input
-                    type="date"
-                    required
-                    min={new Date().toISOString().split('T')[0]}
-                    value={form.checkInDate}
-                    onChange={e => setForm(f => ({ ...f, checkInDate: e.target.value }))}
-                    className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-[#37EFD1]/40 transition-colors"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-white/50 text-xs font-sans uppercase tracking-widest mb-2 block">
-                  Check-out
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                  <input
-                    type="date"
-                    required
-                    min={form.checkInDate || new Date().toISOString().split('T')[0]}
-                    value={form.checkOutDate}
-                    onChange={e => setForm(f => ({ ...f, checkOutDate: e.target.value }))}
-                    className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-[#37EFD1]/40 transition-colors"
-                  />
-                </div>
-              </div>
+        <form onSubmit={handleSubmit} className="bg-[#1A1B21] border border-white/8 rounded-2xl p-6 space-y-6">
+          {error && (
+            <div className="text-[#37EFD1] text-sm bg-[#37EFD1]/10 p-3 rounded space-y-1">
+              <p>{error}</p>
+              {/* Remove this block after debugging */}
+              <p className="text-white/30 text-xs break-all" id="debug-error" />
             </div>
+          )}
 
-            {/* Nights summary */}
-            {nights > 0 && (
-              <div className="bg-[#37EFD1]/8 border border-[#37EFD1]/15 rounded-lg px-4 py-3">
-                <p className="text-[#37EFD1] text-sm font-sans">
-                  <span className="font-semibold">{nights} night{nights > 1 ? 's' : ''}</span>
-                  {' '}selected
+          {/* ── Dates ── */}
+          <div>
+            <label className="text-white/50 text-xs uppercase font-sans mb-2 block tracking-widest">
+              Dates
+            </label>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => handleDateBoxClick('in')}
+                className={`bg-[#0B0C10] border rounded-xl p-3 text-left transition-colors ${
+                  selecting === 'in' && calOpen ? 'border-[#37EFD1]/40' : 'border-white/8'
+                }`}
+              >
+                <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Check-in</p>
+                <p className={`text-sm ${checkIn ? 'text-white' : 'text-white/25'}`}>
+                  {checkIn ? fmt(checkIn) : 'Select date'}
                 </p>
-              </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDateBoxClick('out')}
+                className={`bg-[#0B0C10] border rounded-xl p-3 text-left transition-colors ${
+                  selecting === 'out' && calOpen ? 'border-[#37EFD1]/40' : 'border-white/8'
+                }`}
+              >
+                <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Check-out</p>
+                <p className={`text-sm ${checkOut ? 'text-white' : 'text-white/25'}`}>
+                  {checkOut ? fmt(checkOut) : 'Select date'}
+                </p>
+              </button>
+            </div>
+
+            {nights > 0 && (
+              <p className="text-[#37EFD1] text-sm bg-[#37EFD1]/10 border border-[#37EFD1]/20 rounded-full px-4 py-1.5 inline-block mb-3">
+                {nights} night{nights > 1 ? 's' : ''} selected
+              </p>
             )}
 
-            {/* Guests */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-white/50 text-xs font-sans uppercase tracking-widest mb-2 block">
-                  Adults
-                </label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                  <select
-                    value={form.adults}
-                    onChange={e => setForm(f => ({ ...f, adults: Number(e.target.value) }))}
-                    className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-[#37EFD1]/40 transition-colors appearance-none"
-                  >
-                    {[1, 2, 3, 4].map(n => (
-                      <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="text-white/50 text-xs font-sans uppercase tracking-widest mb-2 block">
-                  Children
-                </label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                  <select
-                    value={form.children}
-                    onChange={e => setForm(f => ({ ...f, children: Number(e.target.value) }))}
-                    className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-[#37EFD1]/40 transition-colors appearance-none"
-                  >
-                    {[0, 1, 2, 3].map(n => (
-                      <option key={n} value={n}>{n} {n === 1 ? 'Child' : 'Children'}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+            {calOpen && (
+              <Calendar checkIn={checkIn} checkOut={checkOut} onPick={handlePick} />
+            )}
+          </div>
 
-            {/* Special Requests */}
+          {/* ── Guests ── */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-white/50 text-xs font-sans uppercase tracking-widest mb-2 block">
-                Special Requests <span className="text-white/25">(optional)</span>
-              </label>
-              <textarea
-                rows={3}
-                value={form.specialRequests}
-                onChange={e => setForm(f => ({ ...f, specialRequests: e.target.value }))}
-                placeholder="Early check-in, dietary requirements, etc."
-                className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans px-4 py-3 rounded-lg focus:outline-none focus:border-[#37EFD1]/40 transition-colors resize-none placeholder:text-white/20"
-              />
+              <label className="text-white/50 text-xs uppercase font-sans mb-1 block">Adults</label>
+              <select
+                value={adults}
+                onChange={e => setAdults(Number(e.target.value))}
+                className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans pl-3 py-3 rounded-lg focus:border-[#37EFD1]/40 transition-colors"
+              >
+                {[1, 2, 3, 4].map(n => (
+                  <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>
+                ))}
+              </select>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#C8102E] hover:bg-[#a00d24] disabled:opacity-60 text-white font-sans font-medium py-3.5 rounded-lg transition-all hover:shadow-lg hover:shadow-[#C8102E]/25 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  {isLoggedIn ? 'Continue to Payment' : 'Login to Book'}
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-        </div>
+            <div>
+              <label className="text-white/50 text-xs uppercase font-sans mb-1 block">Children</label>
+              <select
+                value={children}
+                onChange={e => setChildren(Number(e.target.value))}
+                className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans pl-3 py-3 rounded-lg focus:border-[#37EFD1]/40 transition-colors"
+              >
+                {[0, 1, 2, 3].map(n => (
+                  <option key={n} value={n}>{n} Child{n !== 1 ? 'ren' : ''}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* ── Special Requests ── */}
+          <div>
+            <label className="text-white/50 text-xs uppercase font-sans mb-1 block">
+              Special Requests{' '}
+              <span className="text-white/25 normal-case">(optional)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={specialRequests}
+              onChange={e => setSpecialRequests(e.target.value)}
+              placeholder="Early check-in, dietary requirements..."
+              className="w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans px-3 py-3 rounded-lg focus:border-[#37EFD1]/40 transition-colors placeholder:text-white/20 resize-none"
+            />
+          </div>
+
+          {/* ── Submit ── */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center items-center gap-2 bg-[#37EFD1] hover:bg-[#00FFD5] text-[#0B0C10] py-3.5 rounded-lg font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading
+              ? <Loader2 className="animate-spin h-4 w-4" />
+              : <><ArrowRight className="h-4 w-4" /> Continue</>
+            }
+          </button>
+        </form>
       </div>
     </div>
   );

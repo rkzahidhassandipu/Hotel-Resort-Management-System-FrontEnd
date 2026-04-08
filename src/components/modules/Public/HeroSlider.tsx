@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
 const SLIDES = [
@@ -12,8 +13,9 @@ const SLIDES = [
     cta: 'Explore Rooms',
     href: '/rooms-suites',
     accent: 'Premier Water Chalets from RM 950/night',
-    bg: 'from-[#0B0C10] via-[#0d1a2e] to-[#0B0C10]',
     highlight: '#37EFD1',
+    // Overwater bungalow / tropical resort
+    image: 'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=1920&q=80',
   },
   {
     id: 2,
@@ -23,8 +25,9 @@ const SLIDES = [
     cta: 'Discover Dining',
     href: '/dining',
     accent: 'Reservations available online',
-    bg: 'from-[#1a0a0e] via-[#0B0C10] to-[#0d1a0f]',
     highlight: '#C8102E',
+    // Fine dining / restaurant with ocean view
+    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&q=80',
   },
   {
     id: 3,
@@ -34,34 +37,39 @@ const SLIDES = [
     cta: 'View All Offers',
     href: '/offers',
     accent: 'Save up to 35% — Book Direct',
-    bg: 'from-[#0a1a1a] via-[#0B0C10] to-[#0d0a1a]',
     highlight: '#37EFD1',
+    // Romantic beach / sunset
+    image: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=1920&q=80',
   },
   {
     id: 4,
     tagline: 'World-Class Wellness',
     headline: '160m Infinity\nPool & Angsana Spa',
-    sub: 'Malaysia\'s longest overwater infinity pool blends seamlessly with the horizon. Rejuvenate body and soul at our award-winning Angsana Spa.',
+    sub: "Malaysia's longest overwater infinity pool blends seamlessly with the horizon. Rejuvenate body and soul at our award-winning Angsana Spa.",
     cta: 'Explore Facilities',
     href: '/facilities',
     accent: 'Open daily from 7am',
-    bg: 'from-[#0B0C10] via-[#0a1a0d] to-[#0B0C10]',
     highlight: '#37EFD1',
+    // Infinity pool overlooking sea
+    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1920&q=80',
   },
 ];
 
 export default function HeroSlider() {
-  const [current, setCurrent] = useState(0);
+  const [current,   setCurrent]   = useState(0);
   const [animating, setAnimating] = useState(false);
 
-  const go = useCallback((next: number) => {
-    if (animating) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setCurrent(next);
-      setAnimating(false);
-    }, 400);
-  }, [animating]);
+  const go = useCallback(
+    (next: number) => {
+      if (animating) return;
+      setAnimating(true);
+      setTimeout(() => {
+        setCurrent(next);
+        setAnimating(false);
+      }, 500);
+    },
+    [animating]
+  );
 
   const prev = () => go((current - 1 + SLIDES.length) % SLIDES.length);
   const next = () => go((current + 1) % SLIDES.length);
@@ -75,97 +83,181 @@ export default function HeroSlider() {
 
   return (
     <section className="relative h-screen min-h-[680px] overflow-hidden">
-      {/* Animated BG */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${slide.bg} transition-all duration-1000`}>
-        {/* Geometric pattern overlay */}
-        <div className="absolute inset-0 opacity-5"
-          style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0, rgba(255,255,255,0.1) 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px' }} />
-        {/* Radial glow */}
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-[120px] transition-all duration-1000"
-          style={{ background: `${slide.highlight}18` }} />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-[100px] opacity-60 transition-all duration-1000"
-          style={{ background: `${slide.id % 2 === 0 ? '#C8102E' : '#37EFD1'}12` }} />
-        {/* Animated orbs */}
-        <div className="absolute top-20 right-20 w-2 h-2 rounded-full bg-[#37EFD1]/60 animate-float" />
-        <div className="absolute bottom-1/3 left-16 w-1.5 h-1.5 rounded-full bg-[#C8102E]/80 animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 right-1/3 w-1 h-1 rounded-full bg-white/60 animate-float" style={{ animationDelay: '4s' }} />
+
+      {/* ── Background Images ─────────────────────────────────────────── */}
+      {SLIDES.map((s, i) => (
+        <div
+          key={s.id}
+          className={`absolute inset-0 transition-opacity duration-700 ${
+            i === current ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <Image
+            src={s.image}
+            alt={s.tagline}
+            fill
+            priority={i === 0}
+            className="object-cover object-center"
+            sizes="100vw"
+          />
+        </div>
+      ))}
+
+      {/* ── Dark overlays — keep text readable ───────────────────────── */}
+      {/* Base dark tint */}
+      <div className="absolute inset-0 bg-black/55 z-[1]" />
+      {/* Gradient: dark on left where text lives, lighter on right */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-[2]" />
+      {/* Bottom fade */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0B0C10]/80 via-transparent to-black/30 z-[2]" />
+
+      {/* ── Accent glow tied to slide highlight ──────────────────────── */}
+      <div
+        className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-[140px] z-[2] transition-all duration-1000 pointer-events-none"
+        style={{ background: `${slide.highlight}18` }}
+      />
+
+      {/* ── Animated floating orbs ───────────────────────────────────── */}
+      <div className="absolute top-20 right-20 w-2 h-2 rounded-full bg-[#37EFD1]/60 z-[3] animate-pulse" />
+      <div className="absolute bottom-1/3 left-16 w-1.5 h-1.5 rounded-full bg-[#C8102E]/80 z-[3] animate-pulse" style={{ animationDelay: '1.5s' }} />
+      <div className="absolute top-1/2 right-1/3 w-1 h-1 rounded-full bg-white/60 z-[3] animate-pulse" style={{ animationDelay: '3s' }} />
+
+      {/* ── Progress line ────────────────────────────────────────────── */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-white/10 z-[10]">
+        <div
+          className="h-full bg-[#C8102E] transition-all duration-300"
+          style={{ width: `${((current + 1) / SLIDES.length) * 100}%` }}
+        />
       </div>
 
-      {/* Slide number / progress line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-white/10">
-        <div className="h-full bg-[#C8102E] transition-all duration-300" style={{ width: `${((current + 1) / SLIDES.length) * 100}%` }} />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 h-full flex items-center">
+      {/* ── Slide content ────────────────────────────────────────────── */}
+      <div className="relative z-[5] h-full flex items-center">
         <div className="max-w-7xl mx-auto px-6 w-full">
-          <div className={`max-w-2xl transition-all duration-500 ${animating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'}`}>
+          <div
+            className={`max-w-2xl transition-all duration-500 ${
+              animating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'
+            }`}
+          >
             {/* Eyebrow */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-px w-10 transition-all duration-500" style={{ background: slide.highlight }} />
-              <span className="text-[11px] font-sans tracking-[0.35em] uppercase font-medium" style={{ color: slide.highlight }}>
+              <div className="h-px w-10" style={{ background: slide.highlight }} />
+              <span
+                className="text-[11px] font-sans tracking-[0.35em] uppercase font-medium"
+                style={{ color: slide.highlight }}
+              >
                 {slide.tagline}
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="font-display text-5xl md:text-7xl text-white leading-[1.05] mb-6 whitespace-pre-line">
-              {slide.headline.split('\n')[0]}<br />
-              <em className="not-italic" style={{ color: slide.highlight }}>{slide.headline.split('\n')[1]}</em>
+            <h1 className="font-display text-5xl md:text-7xl text-white leading-[1.05] mb-6 drop-shadow-2xl">
+              {slide.headline.split('\n')[0]}
+              <br />
+              <em className="not-italic" style={{ color: slide.highlight }}>
+                {slide.headline.split('\n')[1]}
+              </em>
             </h1>
 
             {/* Sub */}
-            <p className="text-white/65 text-base md:text-lg font-sans leading-relaxed mb-8 max-w-xl">
+            <p className="text-white/75 text-base md:text-lg font-sans leading-relaxed mb-8 max-w-xl drop-shadow-lg">
               {slide.sub}
             </p>
 
             {/* CTAs */}
             <div className="flex flex-wrap gap-4 mb-8">
-              <Link href={slide.href}
-                className="inline-flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white font-sans font-medium px-7 py-3.5 rounded transition-all hover:shadow-xl hover:shadow-[#C8102E]/30 text-sm">
+              <Link
+                href={slide.href}
+                className="inline-flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white font-sans font-medium px-7 py-3.5 rounded transition-all hover:shadow-xl hover:shadow-[#C8102E]/40 text-sm"
+              >
                 {slide.cta} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/auth/register"
-                className="inline-flex items-center gap-2 border border-white/20 hover:border-[#37EFD1]/60 text-white hover:text-[#37EFD1] font-sans font-medium px-7 py-3.5 rounded transition-all text-sm">
+              <Link
+                href="/auth/register"
+                className="inline-flex items-center gap-2 border border-white/30 hover:border-[#37EFD1]/60 text-white hover:text-[#37EFD1] font-sans font-medium px-7 py-3.5 rounded transition-all text-sm backdrop-blur-sm bg-black/20"
+              >
                 Book Your Stay
               </Link>
             </div>
 
             {/* Accent badge */}
-            <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full">
+            <div className="inline-flex items-center gap-2 border border-white/15 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full">
               <div className="w-1.5 h-1.5 rounded-full bg-[#37EFD1] animate-pulse" />
-              <span className="text-white/70 text-xs font-sans">{slide.accent}</span>
+              <span className="text-white/80 text-xs font-sans">{slide.accent}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Slide dots + arrows */}
-      <div className="absolute bottom-10 right-6 z-20 flex flex-col items-end gap-4">
+      {/* ── Controls: arrows + dots + counter ───────────────────────── */}
+      <div className="absolute bottom-10 right-6 z-[10] flex flex-col items-end gap-4">
         {/* Arrows */}
         <div className="flex gap-2">
-          <button onClick={prev} className="w-10 h-10 rounded-full border border-white/20 hover:border-white/50 flex items-center justify-center text-white/60 hover:text-white transition-all bg-black/20 backdrop-blur-sm">
+          <button
+            onClick={prev}
+            className="w-10 h-10 rounded-full border border-white/25 hover:border-white/60 flex items-center justify-center text-white/60 hover:text-white transition-all bg-black/30 backdrop-blur-sm"
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button onClick={next} className="w-10 h-10 rounded-full border border-[#C8102E]/50 hover:border-[#C8102E] bg-[#C8102E]/10 hover:bg-[#C8102E]/20 flex items-center justify-center text-white transition-all backdrop-blur-sm">
+          <button
+            onClick={next}
+            className="w-10 h-10 rounded-full border border-[#C8102E]/50 hover:border-[#C8102E] bg-[#C8102E]/15 hover:bg-[#C8102E]/30 flex items-center justify-center text-white transition-all backdrop-blur-sm"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        {/* Count */}
+
+        {/* Slide counter */}
         <div className="text-white/40 text-xs font-sans tracking-widest">
-          <span className="text-white text-sm font-medium">{String(current + 1).padStart(2, '0')}</span> / {String(SLIDES.length).padStart(2, '0')}
+          <span className="text-white text-sm font-medium">
+            {String(current + 1).padStart(2, '0')}
+          </span>{' '}
+          / {String(SLIDES.length).padStart(2, '0')}
         </div>
+
         {/* Dots */}
         <div className="flex gap-1.5">
           {SLIDES.map((_, i) => (
-            <button key={i} onClick={() => go(i)}
-              className={`rounded-full transition-all duration-300 ${i === current ? 'w-6 h-1.5 bg-[#C8102E]' : 'w-1.5 h-1.5 bg-white/25 hover:bg-white/50'}`} />
+            <button
+              key={i}
+              onClick={() => go(i)}
+              className={`rounded-full transition-all duration-300 ${
+                i === current
+                  ? 'w-6 h-1.5 bg-[#C8102E]'
+                  : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/60'
+              }`}
+            />
           ))}
         </div>
       </div>
 
-      {/* Scroll cue */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">
+      {/* ── Thumbnail strip (desktop only) ──────────────────────────── */}
+      <div className="absolute left-6 top-1/2 -translate-y-1/2 z-[10] hidden xl:flex flex-col gap-2">
+        {SLIDES.map((s, i) => (
+          <button
+            key={s.id}
+            onClick={() => go(i)}
+            className={`relative w-14 h-10 rounded overflow-hidden border-2 transition-all duration-300 ${
+              i === current
+                ? 'border-[#C8102E] opacity-100 scale-110'
+                : 'border-white/15 opacity-50 hover:opacity-80'
+            }`}
+          >
+            <Image
+              src={s.image}
+              alt={s.tagline}
+              fill
+              className="object-cover"
+              sizes="56px"
+            />
+            {i !== current && (
+              <div className="absolute inset-0 bg-black/40" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Scroll cue ───────────────────────────────────────────────── */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[10] flex flex-col items-center gap-2 text-white/30">
         <div className="w-px h-10 bg-gradient-to-b from-transparent to-white/30 animate-pulse" />
         <span className="text-[9px] tracking-[0.4em] uppercase font-sans">Scroll</span>
       </div>
