@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/rkraz/Downloads/hotel-frontend-final/hotel-frontend/src/app/error.tsx"],"sourcesContent":["'use client';\nexport default function Error({ reset }: { error: Error; reset: () => void }) {\n  return (\n    <div className=\"min-h-screen bg-[#0B0C10] flex items-center justify-center text-center px-6\">\n      <div>\n        <p className=\"text-[#C8102E] text-xs font-sans tracking-widest uppercase mb-4\">Error</p>\n        <h1 className=\"font-display text-5xl text-white mb-4\">Something went wrong</h1>\n        <button onClick={reset} className=\"inline-flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white font-sans font-medium px-7 py-3 rounded transition-all\">\n          Try Again\n        </button>\n      </div>\n    </div>\n  );\n}\n"],"names":["Error","reset","className","onClick"],"mappings":";;;;;AAAA;;AACe,SAASA,MAAM,EAAEC,KAAK,EAAuC;IAC1E,qBACE,8OAAC;QAAIC,WAAU;kBACb,cAAA,8OAAC;;8BACC,8OAAC;oBAAEA,WAAU;8BAAkE;;;;;;8BAC/E,8OAAC;oBAAGA,WAAU;8BAAwC;;;;;;8BACtD,8OAAC;oBAAOC,SAASF;oBAAOC,WAAU;8BAAmI;;;;;;;;;;;;;;;;;AAM7K"}}]
+}

@@ -1,5 +1,0 @@
-1:"$Sreact.fragment"
-2:I[25725,["/_next/static/chunks/0hdmq_smm16a1.js","/_next/static/chunks/0w2x~-3f4_5s8.js"],"ViewportBoundary"]
-3:I[25725,["/_next/static/chunks/0hdmq_smm16a1.js","/_next/static/chunks/0w2x~-3f4_5s8.js"],"MetadataBoundary"]
-4:"$Sreact.suspense"
-0:{"rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Lexis Hibiscus | Where the Sea Meets Luxury"}],["$","meta","1",{"name":"description","content":"Malaysia's most iconic overwater resort in Port Dickson. 526 exclusive water chalets, villas, and suites."}],["$","meta","2",{"name":"keywords","content":"luxury resort,Port Dickson,overwater,Malaysia,hotel"}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"CmIr3ifPkgBJ9Sxp9mun1"}

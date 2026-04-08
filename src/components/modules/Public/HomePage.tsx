@@ -4,6 +4,12 @@ import { ArrowRight, BedDouble, Utensils, Waves, Award, Calendar, ChevronRight, 
 import HeroSlider from './HeroSlider';
 import RoomSlider from './RoomSlider';
 import TestimonialSlider from './TestimonialSlider';
+import QuickBookingBar from '@/components/home/QuickBookingBar';
+import Highlights from '@/components/home/Highlights';
+import RoomsSection from '@/components/home/RoomsSection';
+import OffersSection from '@/components/home/OffersSection';
+import TestimonialsSection from '@/components/home/TestimonialsSection';
+import CTASection from '@/components/home/CTASection';
 
 const HIGHLIGHTS = [
   { icon: BedDouble, label: '526 Rooms', sub: 'Water chalets & villas', col: '#37EFD1' },
@@ -32,99 +38,16 @@ export default function HomePage() {
       <HeroSlider />
 
       {/* Quick Booking Bar */}
-      <section className="bg-[#1A1B21] border-y border-white/5">
-        <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-[#C8102E]" />
-              <span className="text-white font-sans text-sm font-medium">Quick Booking</span>
-            </div>
-            <div className="flex flex-wrap gap-3 flex-1 justify-end">
-              <input type="date" className="bg-[#0B0C10] text-white/70 text-sm font-sans px-4 py-2.5 rounded border border-white/10 focus:outline-none focus:border-[#37EFD1]/50 transition-colors" />
-              <input type="date" className="bg-[#0B0C10] text-white/70 text-sm font-sans px-4 py-2.5 rounded border border-white/10 focus:outline-none focus:border-[#37EFD1]/50 transition-colors" />
-              <select className="bg-[#0B0C10] text-white/70 text-sm font-sans px-4 py-2.5 rounded border border-white/10 focus:outline-none focus:border-[#37EFD1]/50 transition-colors">
-                <option>2 Adults</option><option>1 Adult</option><option>2 Adults, 2 Kids</option>
-              </select>
-              <Link href="/auth/register" className="bg-[#C8102E] hover:bg-[#a00d24] text-white text-sm font-sans font-medium px-6 py-2.5 rounded transition-all hover:shadow-lg hover:shadow-[#C8102E]/25 whitespace-nowrap">
-                Check Availability
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+     <QuickBookingBar />
 
       {/* Highlights Stats */}
-      <section className="py-16 bg-[#0B0C10]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5 rounded-xl overflow-hidden">
-            {HIGHLIGHTS.map(({ icon: Icon, label, sub, col }) => (
-              <div key={label} className="bg-[#0B0C10] p-8 text-center group hover:bg-[#1A1B21] transition-colors">
-                <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center transition-all group-hover:scale-110"
-                  style={{ background: `${col}15`, border: `1px solid ${col}30` }}>
-                  <Icon className="h-5 w-5" style={{ color: col }} />
-                </div>
-                <p className="font-display text-xl text-white font-semibold mb-1">{label}</p>
-                <p className="text-white/40 text-xs font-sans">{sub}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Highlights />
 
       {/* Rooms Section */}
-      <section className="py-20 bg-[#0B0C10]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <p className="text-[#37EFD1] text-[11px] font-sans tracking-[0.35em] uppercase mb-3">Accommodations</p>
-            <h2 className="font-display text-4xl md:text-5xl text-white mb-4">Rooms & Suites</h2>
-            <div className="divider-crimson mx-auto mb-5" />
-            <p className="text-white/50 font-sans max-w-lg mx-auto">
-              526 uniquely crafted water chalets, villas, and suites — each positioned above the shimmering South China Sea.
-            </p>
-          </div>
-          <RoomSlider />
-          <div className="text-center mt-10">
-            <Link href="/rooms-suites" className="inline-flex items-center gap-2 border border-white/15 hover:border-[#C8102E]/60 text-white hover:text-[#C8102E] font-sans font-medium px-8 py-3 rounded transition-all text-sm">
-              View All Rooms <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <RoomsSection />
 
       {/* Offers Section */}
-      <section className="py-20 bg-[#1A1B21]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <p className="text-[#C8102E] text-[11px] font-sans tracking-[0.35em] uppercase mb-3">Exclusive Deals</p>
-            <h2 className="font-display text-4xl md:text-5xl text-white mb-4">Special Offers</h2>
-            <div className="divider-crimson mx-auto" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {OFFERS.map(offer => (
-              <div key={offer.title} className="group relative border rounded-xl p-6 overflow-hidden transition-all duration-300 hover:-translate-y-1 bg-[#0B0C10] border-white/5 hover:border-[#C8102E]/25 hover:shadow-xl hover:shadow-[#C8102E]/5">
-                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${offer.color}60, transparent)` }} />
-                <div className="flex items-start justify-between mb-4">
-                  <span className="text-[10px] font-sans uppercase tracking-widest px-2.5 py-1 rounded-full border"
-                    style={{ color: offer.color, borderColor: `${offer.color}30`, background: `${offer.color}10` }}>
-                    {offer.badge}
-                  </span>
-                  <span className="text-xs font-sans font-semibold px-2.5 py-1 rounded bg-[#C8102E] text-white">{offer.save}</span>
-                </div>
-                <h3 className="font-display text-white text-xl mb-2">{offer.title}</h3>
-                <p className="text-white/50 text-sm font-sans leading-relaxed mb-5">{offer.desc}</p>
-                <Link href="/offers" className="flex items-center gap-1.5 text-sm font-sans font-medium transition-all group-hover:gap-2.5" style={{ color: offer.color }}>
-                  Learn More <ChevronRight className="h-4 w-4" />
-                </Link>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <Link href="/offers" className="inline-flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white font-sans font-medium px-8 py-3 rounded transition-all hover:shadow-lg hover:shadow-[#C8102E]/30 text-sm">
-              All Offers <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <OffersSection />
 
       {/* Dining Section */}
       <section className="py-20 bg-[#0B0C10]">
@@ -166,39 +89,10 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 bg-[#1A1B21]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <p className="text-[#C8102E] text-[11px] font-sans tracking-[0.35em] uppercase mb-3">Guest Stories</p>
-            <h2 className="font-display text-4xl md:text-5xl text-white mb-4">What Our Guests Say</h2>
-            <div className="divider-crimson mx-auto" />
-          </div>
-          <TestimonialSlider />
-        </div>
-      </section>
+      <TestimonialsSection />
 
       {/* CTA Section */}
-      <section className="relative py-24 bg-[#0B0C10] overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[140px] bg-[#C8102E]/8" />
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8102E]/30 to-transparent" />
-        </div>
-        <div className="relative max-w-3xl mx-auto px-6 text-center">
-          <Sparkles className="h-8 w-8 text-[#37EFD1] mx-auto mb-6 animate-float" />
-          <h2 className="font-display text-4xl md:text-5xl text-white mb-5">Ready for Your Dream Escape?</h2>
-          <p className="text-white/55 font-sans mb-10 leading-relaxed text-lg">
-            Book directly for the best rates, complimentary breakfast, and exclusive member benefits unavailable anywhere else.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/auth/register" className="bg-[#C8102E] hover:bg-[#a00d24] text-white font-sans font-medium px-10 py-4 rounded transition-all hover:shadow-2xl hover:shadow-[#C8102E]/30 text-sm">
-              Book Your Stay
-            </Link>
-            <Link href="/facilities" className="border border-white/15 hover:border-[#37EFD1]/40 hover:text-[#37EFD1] text-white font-sans font-medium px-10 py-4 rounded transition-all text-sm">
-              Explore Facilities
-            </Link>
-          </div>
-        </div>
-      </section>
+     <CTASection />
     </div>
   );
 }

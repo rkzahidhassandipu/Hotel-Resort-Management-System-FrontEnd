@@ -1,0 +1,5 @@
+{"timestamp":"00:00:04.409","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:01:12.730","source":"Server","level":"LOG","message":"○ Compiling /auth/register ..."}
+{"timestamp":"00:06:39.412","source":"Server","level":"LOG","message":"  Reload env: .env.local"}
+{"timestamp":"00:06:39.654","source":"Server","level":"LOG","message":"✓ Compiled in 188ms"}
+{"timestamp":"00:08:37.953","source":"Browser","level":"LOG","message":"{\"data\":{\"email\":\"rkrazzkhan01731@gmail.com\",\"firstName\":\"Zahid\",\"id\":\"cmnpyc6r40000o29ovba5yd75\",\"lastName\":\"Hassn\",\"role\":\"CUSTOMER\",\"status\":\"PENDING_VERIFICATION\"},\"message\":\"Registration successful. Please verify your email.\",\"success\":true}"}

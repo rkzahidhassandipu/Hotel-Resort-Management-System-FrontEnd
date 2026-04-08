@@ -19,4 +19,6 @@ export const roomService = {
   createCategory: (data: unknown) => httpClient.post('/rooms/categories/new', data),
   updateCategory: (id: string, data: unknown) => httpClient.put(`/rooms/categories/${id}`, data),
   createAmenity: (data: unknown) => httpClient.post('/rooms/amenities/new', data),
+  deleteAmenity: (id: string) => httpClient.delete(`/rooms/amenities/${id}`),
+  deleteCategory: (id: string) => httpClient.delete(`/rooms/categories/${id}`),
 };

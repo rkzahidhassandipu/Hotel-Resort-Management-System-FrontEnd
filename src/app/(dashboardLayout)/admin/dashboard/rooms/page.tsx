@@ -1,105 +1,219 @@
-'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { BedDouble, Plus, Loader2 } from 'lucide-react';
-import DataTable, { Column } from '@/components/shared/table/DataTable';
-import DataTableSearch from '@/components/shared/table/DataTableSearch';
-import DataTableFilters from '@/components/shared/table/DataTableFilters';
-import DataTablePagination from '@/components/shared/table/DataTablePagination';
-import StatusBadgeCell from '@/components/shared/cell/StatusBadgeCell';
-import StatsCard from '@/components/shared/StatsCard';
-import { roomService } from '@/service/room.service';
-import type { Room } from '@/types';
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+// Shared Components
+import DataTable, { Column } from "@/components/shared/table/DataTable";
+import DataTableSearch from "@/components/shared/table/DataTableSearch";
+import DataTableFilters from "@/components/shared/table/DataTableFilters";
+import DataTablePagination from "@/components/shared/table/DataTablePagination";
+import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
+import { Button } from "@/components/ui/button";
+
+// Services & Types
+import { roomService } from "@/service/room.service";
+import type { Room } from "@/types";
+import { RoomActions } from "@/components/admin/Room/RoomActions";
+import { RoomStats } from "@/components/admin/Room/RoomStats";
+import AddRoomModal from "@/components/admin/Room/AddRoomModal";
+import { ConfirmDeleteDialog } from "@/components/admin/Room/ConfirmDeleteDialog";
+import { UploadImagesDialog } from "@/components/admin/Room/UploadImagesDialog";
+import { AddPricingRuleDialog } from "@/components/admin/Room/AddPricingRuleDialog";
+import { CategoryModal } from "@/components/admin/Room/CategoryModal";
+import { AmenityModal } from "@/components/admin/Room/AmenityModal";
+
+const LIMIT = 10;
+export const roomKeys = {
+  all: (params: Record<string, unknown>) => ["rooms", "list", params] as const,
+  stats: () => ["rooms", "stats"] as const,
+  categories: () => ["rooms", "categories"] as const,
+  amenities: () => ["rooms", "amenities"] as const,
+};
 
 export default function AdminRoomsPage() {
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ status: '', type: '' });
+  const queryClient = useQueryClient();
+
+  // Filter & Pagination States
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({ status: "", type: "" });
   const [page, setPage] = useState(1);
-  const [data, setData] = useState<Room[]>([]);
-  const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
-      if (filters.status) params.status = filters.status;
-      if (filters.type) params.type = filters.type;
-      const [roomRes, statsRes] = await Promise.all([roomService.getAll(params), roomService.getStats()]);
-      const d = roomRes.data?.data;
-      setData(d?.data || d || []);
-      setTotal(d?.total || 0);
-      setStats(statsRes.data?.data || {});
-    } catch { setData([]); }
-    setLoading(false);
-  }, [page, search, filters]);
+  // Modal Visibility States
+  const [addOpen, setAddOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Room | null>(null);
+  const [uploadTarget, setUploadTarget] = useState<Room | null>(null);
+  const [pricingTarget, setPricingTarget] = useState<Room | null>(null);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [amenityOpen, setAmenityOpen] = useState(false);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // ── Clean Params Logic ───────────────────────────────────────
+  const params: Record<string, any> = { page, limit: LIMIT };
+  if (search.trim()) params.search = search;
+  if (filters.status) params.status = filters.status;
+  if (filters.type) params.type = filters.type;
 
-  const handleStatusChange = async (id: string, status: string) => {
-    setActionLoading(id + status);
-    try {
-      await roomService.update(id, { status });
-      await fetchData();
-    } catch {}
-    setActionLoading(null);
-  };
+  const currentKey = roomKeys.all(params);
 
-  const statusOptions = ['AVAILABLE', 'OCCUPIED', 'CLEANING', 'MAINTENANCE', 'OUT_OF_ORDER'];
+  // ── Data Fetching ──────────────────────────────────────────
+  const { data: roomRes, isLoading } = useQuery({
+    queryKey: currentKey,
+    queryFn: () => roomService.getAll(params),
+    placeholderData: (p) => p,
+  });
 
+  const { data: statsRes } = useQuery({
+    queryKey: roomKeys.stats(),
+    queryFn: () => roomService.getStats(),
+  });
+
+  const { data: categoriesRes } = useQuery({
+    queryKey: roomKeys.categories(),
+    queryFn: () => roomService.getCategories(),
+  });
+
+  const { data: amenitiesRes } = useQuery({
+    queryKey: roomKeys.amenities(),
+    queryFn: () => roomService.getAmenities(),
+  });
+
+  // ── Mutations ───────────────────────────────────────────────
+  const { mutate: changeStatus } = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      roomService.update(id, { status }),
+    onSuccess: () => toast.success("Status updated successfully"),
+    onError: () => toast.error("Failed to update status"),
+    onSettled: () => {
+      setPendingKey(null);
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+    },
+  });
+
+  const { mutate: deleteRoom, isPending: isDeleting } = useMutation({
+    mutationFn: (id: string) => roomService.delete(id),
+    onSuccess: () => {
+      toast.success("Room deleted successfully");
+      setDeleteTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+    },
+    onError: () => toast.error("Could not delete room"),
+  });
+
+  // ── Robust Data Extraction ──────────────────────────────────
+  const rooms = (() => {
+    const raw = roomRes?.data;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw.data)) return raw.data;
+    if (raw.data && Array.isArray(raw.data.data)) return raw.data.data;
+    return [];
+  })();
+
+  const total = roomRes?.data?.total || roomRes?.data?.data?.total || 0;
+  const stats = statsRes?.data?.data || {};
+  const byStatus = Object.fromEntries(
+    (stats.byStatus ?? []).map((s: any) => [
+      s.status, 
+      s._count ? Object.values(s._count)[0] : 0
+    ])
+  );
+
+  // ── Table Columns ───────────────────────────────────────────
   const columns: Column<Room>[] = [
-    { key: 'roomNumber', header: 'Room No.', render: (_, r) => <span className="text-[#37EFD1] font-mono text-sm">#{r.roomNumber}</span> },
-    { key: 'type', header: 'Type', render: (_, r) => <span className="text-white text-sm">{r.type}</span> },
-    { key: 'floor', header: 'Floor', render: (_, r) => <span className="text-white/60 text-sm">Floor {r.floor}</span> },
-    { key: 'maxOccupancy', header: 'Capacity', render: (_, r) => <span className="text-white/60 text-sm">{r.maxOccupancy} guests</span> },
-    { key: 'category', header: 'Base Price', render: (_, r) => <span className="text-white font-medium text-sm">RM {Number(r.category?.basePrice || 0).toLocaleString()}/night</span> },
-    { key: 'status', header: 'Status', render: (_, r) => <StatusBadgeCell status={r.status} /> },
     {
-      key: 'id', header: 'Actions', render: (_, r) => (
-        <div className="flex gap-1 flex-wrap">
-          {statusOptions.filter(s => s !== r.status).map(s => (
-            <button key={s} onClick={() => handleStatusChange(r.id, s)} disabled={!!actionLoading}
-              className="text-[9px] font-sans px-2 py-0.5 rounded border border-white/10 text-white/40 hover:border-white/25 hover:text-white transition-all">
-              {actionLoading === r.id + s ? '...' : s.replace('_', ' ')}
-            </button>
-          ))}
-        </div>
-      )
+      key: "roomNumber",
+      header: "Room No.",
+      render: (_, r) => <span className="text-[#37EFD1] font-mono font-medium">#{r.roomNumber}</span>,
+    },
+    { key: "type", header: "Type" },
+    { key: "floor", header: "Floor", render: (_, r) => <span className="text-white/50">Lvl {r.floor}</span> },
+    {
+      key: "category",
+      header: "Price",
+      render: (_, r) => <span className="font-medium text-white">RM {Number(r.category?.basePrice || 0).toLocaleString()}</span>,
+    },
+    { key: "status", header: "Status", render: (_, r) => <StatusBadgeCell status={r.status} /> },
+    {
+      key: "id",
+      header: "Actions",
+      render: (_, r) => (
+        <RoomActions 
+          room={r}
+          pendingKey={pendingKey}
+          onStatusChange={(id, status) => { setPendingKey(id + status); changeStatus({ id, status }); }}
+          onUploadClick={setUploadTarget}
+          onPricingClick={setPricingTarget}
+          onDeleteClick={setDeleteTarget}
+          onSyncAmenities={() => toast.info("Syncing amenities data...")}
+        />
+      ),
     },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="font-display text-2xl text-white font-semibold">Rooms</h1><p className="text-white/35 text-sm font-sans mt-0.5">Manage all hotel rooms</p></div>
-        <button className="flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white text-sm font-sans font-medium px-4 py-2 rounded-lg transition-all"><Plus className="h-4 w-4" />Add Room</button>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[['Available', stats.available || 0, '#37EFD1'], ['Occupied', stats.occupied || 0, '#C8102E'], ['Cleaning', stats.cleaning || 0, '#a78bfa'], ['Maintenance', stats.maintenance || 0, '#fb923c']].map(([l, v, c]) =>
-          <StatsCard key={l as string} title={l as string} value={v as number} icon={BedDouble} color={c as '#C8102E'} />
-        )}
-      </div>
-      <div className="bg-[#1A1B21] border border-white/5 rounded-xl p-5">
-        <div className="flex flex-wrap gap-3 mb-4">
-          <DataTableSearch value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search by room number or type..." />
-          <DataTableFilters
-            filters={[
-              { key: 'status', label: 'All Statuses', options: [{ label: 'Available', value: 'AVAILABLE' }, { label: 'Occupied', value: 'OCCUPIED' }, { label: 'Cleaning', value: 'CLEANING' }, { label: 'Maintenance', value: 'MAINTENANCE' }] },
-              { key: 'type', label: 'All Types', options: [{ label: 'Suite', value: 'SUITE' }, { label: 'Deluxe', value: 'DELUXE' }, { label: 'Villa', value: 'VILLA' }, { label: 'Penthouse', value: 'PENTHOUSE' }] },
-            ]}
-            values={filters} onChange={(k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1); }} onReset={() => { setFilters({ status: '', type: '' }); setPage(1); }} />
+        <div>
+          <h1 className="text-2xl font-semibold text-white">Room Management</h1>
+          <p className="text-sm text-white/40">Overview and control of hotel inventory</p>
         </div>
-        {loading ? (
-          <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/30" /></div>
+        <div className="flex gap-2">
+          <Button onClick={() => setAddOpen(true)} className="bg-[#C8102E] hover:bg-[#a00d24]">
+            <Plus className="mr-2 h-4 w-4" /> Add New Room
+          </Button>
+          <Button onClick={() => setCategoryOpen(true)}>Manage Categories</Button>
+          <Button onClick={() => setAmenityOpen(true)}>Manage Amenities</Button>
+        </div>
+      </div>
+
+      <RoomStats total={stats.total ?? 0} byStatus={byStatus} />
+
+      <div className="rounded-xl border border-white/5 bg-[#1A1B21] p-5">
+        <div className="mb-6 flex flex-wrap gap-3">
+          <DataTableSearch value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
+          <DataTableFilters 
+            values={filters}
+            onChange={(k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1); }}
+            onReset={() => setFilters({ status: "", type: "" })}
+            filters={[
+              { key: "status", label: "Status", options: [{ label: "Available", value: "AVAILABLE" }, { label: "Occupied", value: "OCCUPIED" }, { label: "Cleaning", value: "CLEANING" }] },
+              { key: "type", label: "Type", options: [{ label: "Suite", value: "SUITE" }, { label: "Deluxe", value: "DELUXE" }, { label: "Villa", value: "VILLA" }] }
+            ]}
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-white/20" /></div>
         ) : (
           <>
-            <DataTable data={data} columns={columns} />
-            <DataTablePagination page={page} totalPages={Math.ceil(total / 10)} onPage={setPage} total={total} limit={10} />
+            <DataTable data={rooms} columns={columns} />
+            <DataTablePagination 
+              page={page} 
+              totalPages={Math.ceil(total / LIMIT)} 
+              onPage={setPage} 
+              total={total}
+              limit={LIMIT}
+            />
           </>
         )}
       </div>
+
+      {/* ── Modals ──────────────────────────────── */}
+      <AddRoomModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <ConfirmDeleteDialog 
+        open={!!deleteTarget} 
+        roomNumber={deleteTarget?.roomNumber ?? ""} 
+        onConfirm={() => deleteRoom(deleteTarget!.id)} 
+        onCancel={() => setDeleteTarget(null)} 
+        isPending={isDeleting} 
+      />
+      {uploadTarget && <UploadImagesDialog open roomId={uploadTarget.id} onClose={() => setUploadTarget(null)} />}
+      {pricingTarget && <AddPricingRuleDialog open roomId={pricingTarget.id} onClose={() => setPricingTarget(null)} />}
+      {categoryOpen && <CategoryModal open categories={categoriesRes?.data?.data || []} onClose={() => setCategoryOpen(false)} />}
+      {amenityOpen && <AmenityModal open amenities={amenitiesRes?.data?.data || []} onClose={() => setAmenityOpen(false)} />}
     </div>
   );
 }

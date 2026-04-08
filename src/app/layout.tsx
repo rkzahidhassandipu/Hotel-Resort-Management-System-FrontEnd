@@ -3,7 +3,11 @@ import type { Metadata } from 'next';
 import './globals.css';
 import QueryProvider from '@/providers/QueryProvider';
 import { Toaster } from 'sonner';
-import { Jost } from 'next/font/google';
+import { Jost, Geist } from 'next/font/google';
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 // Primary font via Next.js font optimization
 const jost = Jost({
@@ -24,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={jost.className}>
+    <html lang="en" className={cn(jost.className, "font-sans", geist.variable)}>
       <body>
         <QueryProvider>
           {children}
