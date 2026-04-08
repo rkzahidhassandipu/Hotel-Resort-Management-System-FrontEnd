@@ -1,3 +1,0 @@
-module.exports=[70112,a=>{"use strict";var b=a.i(7997);a.s(["default",0,function(){return(0,b.jsxs)("div",{className:"space-y-6 animate-pulse",children:[(0,b.jsx)("div",{className:"h-8 w-48 rounded skeleton"}),(0,b.jsx)("div",{className:"grid grid-cols-2 lg:grid-cols-4 gap-4",children:Array.from({length:4}).map((a,c)=>(0,b.jsx)("div",{className:"h-28 rounded-xl skeleton"},c))}),(0,b.jsx)("div",{className:"h-64 rounded-xl skeleton"})]})}])},36105,a=>{a.n(a.i(70112))}];
-
-//# sourceMappingURL=src_app_%28dashboardLayout%29_admin_dashboard_reviews_loading_tsx_11xxbrw._.js.map

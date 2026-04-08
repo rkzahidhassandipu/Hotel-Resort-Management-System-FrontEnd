@@ -12,6 +12,7 @@ import StatsCard from '@/components/shared/StatsCard';
 import { userService } from '@/service/user.service';
 import type { User } from '@/types';
 import { parseUserStats } from '@/lib/statsUtils';
+import { render } from 'react-dom';
 
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
@@ -54,6 +55,7 @@ export default function AdminUsersPage() {
     setActionLoading(null);
   };
 
+
   const columns: Column<User>[] = [
     { key: 'firstName', header: 'User', render: (_, r) => <UserInfoCell firstName={r.firstName} lastName={r.lastName} email={r.email} /> },
     { key: 'role', header: 'Role', render: (_, r) => <span className="text-xs px-2 py-0.5 rounded-full bg-[#C8102E]/15 text-[#C8102E] font-sans">{r.role}</span> },
@@ -71,6 +73,7 @@ export default function AdminUsersPage() {
     },
   ];
 
+  console.log(columns)
   return (
     <div className="space-y-6">
       <div><h1 className="font-display text-2xl text-white font-semibold">Users</h1><p className="text-white/35 text-sm font-sans mt-0.5">Manage all system users</p></div>

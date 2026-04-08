@@ -28,6 +28,7 @@ const statusMap: Record<string, { label: string; color: string; bg: string }> = 
 };
 interface Props { status: string; }
 export default function StatusBadgeCell({ status }: Props) {
+    console.log(status);
   const s = statusMap[status] || { label: status, color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' };
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-sans font-medium"
