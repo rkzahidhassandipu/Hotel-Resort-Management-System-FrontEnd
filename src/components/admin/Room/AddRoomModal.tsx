@@ -44,10 +44,11 @@ interface Amenity {
   category?: string;
 }
 
-export interface AddRoomModalProps {
+// AddRoomModal.tsx এ
+interface AddRoomModalProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void; // ✅ optional
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -144,10 +145,13 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
   // ── Create mutation ────────────────────────────────────────────────────────
   const { mutate: createRoom, isPending } = useMutation({
     mutationFn: (payload: Record<string, unknown>) => roomService.create(payload),
-    onSuccess: () => {
-      setToast({ type: "success", msg: `Room #${form.roomNumber} created successfully` });
-      setTimeout(() => { onSuccess(); onClose(); }, 1200);
-    },
+   onSuccess: () => {
+  setToast({ type: "success", msg: `Room #${form.roomNumber} created successfully` });
+  setTimeout(() => {
+    onSuccess?.();
+    onClose();
+  }, 1200);
+},
     onError: (err: unknown) => {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message

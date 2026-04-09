@@ -116,9 +116,9 @@ export default function AdminRoomsPage() {
   const stats = statsRes?.data?.data || {};
   const byStatus = Object.fromEntries(
     (stats.byStatus ?? []).map((s: any) => [
-      s.status, 
-      s._count ? Object.values(s._count)[0] : 0
-    ])
+      s.status,
+      s._count ? Object.values(s._count)[0] : 0,
+    ]),
   );
 
   // ── Table Columns ───────────────────────────────────────────
@@ -126,24 +126,43 @@ export default function AdminRoomsPage() {
     {
       key: "roomNumber",
       header: "Room No.",
-      render: (_, r) => <span className="text-[#37EFD1] font-mono font-medium">#{r.roomNumber}</span>,
+      render: (_, r) => (
+        <span className="text-[#37EFD1] font-mono font-medium">
+          #{r.roomNumber}
+        </span>
+      ),
     },
     { key: "type", header: "Type" },
-    { key: "floor", header: "Floor", render: (_, r) => <span className="text-white/50">Lvl {r.floor}</span> },
+    {
+      key: "floor",
+      header: "Floor",
+      render: (_, r) => <span className="text-white/50">Lvl {r.floor}</span>,
+    },
     {
       key: "category",
       header: "Price",
-      render: (_, r) => <span className="font-medium text-white">RM {Number(r.category?.basePrice || 0).toLocaleString()}</span>,
+      render: (_, r) => (
+        <span className="font-medium text-white">
+          RM {Number(r.category?.basePrice || 0).toLocaleString()}
+        </span>
+      ),
     },
-    { key: "status", header: "Status", render: (_, r) => <StatusBadgeCell status={r.status} /> },
+    {
+      key: "status",
+      header: "Status",
+      render: (_, r) => <StatusBadgeCell status={r.status} />,
+    },
     {
       key: "id",
       header: "Actions",
       render: (_, r) => (
-        <RoomActions 
+        <RoomActions
           room={r}
           pendingKey={pendingKey}
-          onStatusChange={(id, status) => { setPendingKey(id + status); changeStatus({ id, status }); }}
+          onStatusChange={(id, status) => {
+            setPendingKey(id + status);
+            changeStatus({ id, status });
+          }}
           onUploadClick={setUploadTarget}
           onPricingClick={setPricingTarget}
           onDeleteClick={setDeleteTarget}
@@ -158,13 +177,20 @@ export default function AdminRoomsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">Room Management</h1>
-          <p className="text-sm text-white/40">Overview and control of hotel inventory</p>
+          <p className="text-sm text-white/40">
+            Overview and control of hotel inventory
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setAddOpen(true)} className="bg-[#C8102E] hover:bg-[#a00d24]">
+          <Button
+            onClick={() => setAddOpen(true)}
+            className="bg-[#C8102E] hover:bg-[#a00d24]"
+          >
             <Plus className="mr-2 h-4 w-4" /> Add New Room
           </Button>
-          <Button onClick={() => setCategoryOpen(true)}>Manage Categories</Button>
+          <Button onClick={() => setCategoryOpen(true)}>
+            Manage Categories
+          </Button>
           <Button onClick={() => setAmenityOpen(true)}>Manage Amenities</Button>
         </div>
       </div>
@@ -173,27 +199,54 @@ export default function AdminRoomsPage() {
 
       <div className="rounded-xl border border-white/5 bg-[#1A1B21] p-5">
         <div className="mb-6 flex flex-wrap gap-3">
-          <DataTableSearch value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
-          <DataTableFilters 
+          <DataTableSearch
+            value={search}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+          />
+          <DataTableFilters
             values={filters}
-            onChange={(k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1); }}
+            onChange={(k, v) => {
+              setFilters((f) => ({ ...f, [k]: v }));
+              setPage(1);
+            }}
             onReset={() => setFilters({ status: "", type: "" })}
             filters={[
-              { key: "status", label: "Status", options: [{ label: "Available", value: "AVAILABLE" }, { label: "Occupied", value: "OCCUPIED" }, { label: "Cleaning", value: "CLEANING" }] },
-              { key: "type", label: "Type", options: [{ label: "Suite", value: "SUITE" }, { label: "Deluxe", value: "DELUXE" }, { label: "Villa", value: "VILLA" }] }
+              {
+                key: "status",
+                label: "Status",
+                options: [
+                  { label: "Available", value: "AVAILABLE" },
+                  { label: "Occupied", value: "OCCUPIED" },
+                  { label: "Cleaning", value: "CLEANING" },
+                ],
+              },
+              {
+                key: "type",
+                label: "Type",
+                options: [
+                  { label: "Suite", value: "SUITE" },
+                  { label: "Deluxe", value: "DELUXE" },
+                  { label: "Villa", value: "VILLA" },
+                ],
+              },
             ]}
           />
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-white/20" /></div>
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-white/20" />
+          </div>
         ) : (
           <>
             <DataTable data={rooms} columns={columns} />
-            <DataTablePagination 
-              page={page} 
-              totalPages={Math.ceil(total / LIMIT)} 
-              onPage={setPage} 
+            <DataTablePagination
+              page={page}
+              totalPages={Math.ceil(total / LIMIT)}
+              onPage={setPage}
               total={total}
               limit={LIMIT}
             />
@@ -202,18 +255,46 @@ export default function AdminRoomsPage() {
       </div>
 
       {/* ── Modals ──────────────────────────────── */}
-      <AddRoomModal open={addOpen} onClose={() => setAddOpen(false)} />
-      <ConfirmDeleteDialog 
-        open={!!deleteTarget} 
-        roomNumber={deleteTarget?.roomNumber ?? ""} 
-        onConfirm={() => deleteRoom(deleteTarget!.id)} 
-        onCancel={() => setDeleteTarget(null)} 
-        isPending={isDeleting} 
+      <AddRoomModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["rooms"] })}
       />
-      {uploadTarget && <UploadImagesDialog open roomId={uploadTarget.id} onClose={() => setUploadTarget(null)} />}
-      {pricingTarget && <AddPricingRuleDialog open roomId={pricingTarget.id} onClose={() => setPricingTarget(null)} />}
-      {categoryOpen && <CategoryModal open categories={categoriesRes?.data?.data || []} onClose={() => setCategoryOpen(false)} />}
-      {amenityOpen && <AmenityModal open amenities={amenitiesRes?.data?.data || []} onClose={() => setAmenityOpen(false)} />}
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        roomNumber={deleteTarget?.roomNumber ?? ""}
+        onConfirm={() => deleteRoom(deleteTarget!.id)}
+        onCancel={() => setDeleteTarget(null)}
+        isPending={isDeleting}
+      />
+      {uploadTarget && (
+        <UploadImagesDialog
+          open
+          roomId={uploadTarget.id}
+          onClose={() => setUploadTarget(null)}
+        />
+      )}
+      {pricingTarget && (
+        <AddPricingRuleDialog
+          open
+          roomId={pricingTarget.id}
+          onClose={() => setPricingTarget(null)}
+        />
+      )}
+      {categoryOpen && (
+        // ✅ categories prop সরাও
+        <CategoryModal
+          open={categoryOpen}
+          onClose={() => setCategoryOpen(false)}
+        />
+      )}
+      {amenityOpen && (
+        <AmenityModal
+          open
+          amenities={amenitiesRes?.data?.data || []}
+          onClose={() => setAmenityOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -193,3 +193,14 @@ export interface DashboardStats {
 }
 export interface ApiResponse<T> { data: T; message: string; success: boolean; }
 export interface PaginatedResponse<T> { data: T[]; total: number; page: number; limit: number; totalPages: number; }
+
+
+export interface Category {
+  id: string;
+  name: string;
+  basePrice: number;
+  maxOccupancy: number;
+  description?: string;
+  weekendPrice?: number;
+  amenities?: string[];
+}
