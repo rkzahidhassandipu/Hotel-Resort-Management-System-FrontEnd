@@ -12,6 +12,7 @@ interface Props<T> {
   onSort?: (key: string) => void; sortBy?: string; sortDir?: 'asc' | 'desc';
 }
 export default function DataTable<T extends Record<string, unknown>>({ data, columns, loading, emptyMessage = 'No data found', onSort, sortBy, sortDir }: Props<T>) {
+
   return (
     <div className="overflow-x-auto rounded-xl border border-white/5">
       <table className="w-full">

@@ -25,6 +25,21 @@ export type StockStatus = 'SUFFICIENT' | 'LOW' | 'OUT_OF_STOCK' | 'OVERSTOCKED';
 export type ProcurementStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'ORDERED' | 'RECEIVED' | 'CANCELLED';
 export type InvoiceStatus = 'DRAFT' | 'ISSUED' | 'PAID' | 'OVERDUE' | 'VOID' | 'CANCELLED';
 
+export interface CreateRoomPayload {
+  roomNumber: string;
+  floor: number;
+  type: "STANDARD" | "DELUXE" | "SUITE" | "VILLA" | "PENTHOUSE";
+  bedType: "SINGLE" | "DOUBLE" | "QUEEN" | "KING" | "TWIN";
+  maxOccupancy: number;
+  sizeInSqFt?: number;
+  categoryId: string;
+  description?: string;
+  view?: string;
+  smokingAllowed?: boolean;
+  petFriendly?: boolean;
+  notes?: string;
+  amenityIds?: string[];
+}
 export interface User {
   id: string; email: string; phone?: string; role: Role; status: UserStatus;
   firstName: string; lastName: string; gender?: string; dateOfBirth?: string;

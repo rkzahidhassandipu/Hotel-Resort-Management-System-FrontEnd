@@ -1,3 +1,5 @@
+"use client"
+
 import { 
   MoreHorizontal, Wrench, Image, DollarSign, Tag, Trash2, Loader2 
 } from "lucide-react";
@@ -8,8 +10,8 @@ import {
   DropdownMenuSubTrigger, DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Room } from "@/types";
-
-const STATUS_OPTIONS = ["AVAILABLE", "OCCUPIED", "CLEANING", "MAINTENANCE", "OUT_OF_ORDER"];
+import { useQuery } from "@tanstack/react-query";
+import { roomService } from "@/service/room.service";
 
 interface RoomActionsProps {
   room: Room;
@@ -24,6 +26,45 @@ interface RoomActionsProps {
 export function RoomActions({
   room, pendingKey, onStatusChange, onUploadClick, onPricingClick, onDeleteClick, onSyncAmenities
 }: RoomActionsProps) {
+  const { data: statuses = [], isLoading } = useQuery<unknown[], unknown>({
+    queryKey: ["room-statuses"],
+    queryFn: async () => {
+      const response = await roomService.getStatuses();
+      return response.data?.data ?? response.data ?? [];
+    },
+  });
+
+  const statusOptions = Array.isArray(statuses)
+    ? statuses
+        .map((item) => {
+          if (typeof item === "string") {
+            return { value: item, label: item.replace(/_/g, " ") };
+          }
+
+          if (item && typeof item === "object") {
+            const value =
+              (item as any).value ??
+              (item as any).status ??
+              (item as any).name ??
+              (item as any).key;
+            const label =
+              (item as any).label ??
+              (item as any).name ??
+              (typeof value === "string" ? value.replace(/_/g, " ") : undefined);
+
+            if (typeof value === "string") {
+              return {
+                value,
+                label: typeof label === "string" ? label : value.replace(/_/g, " "),
+              };
+            }
+          }
+
+          return null;
+        })
+        .filter((option): option is { value: string; label: string } => option !== null)
+    : [];
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,20 +78,34 @@ export function RoomActions({
             <Wrench className="h-3.5 w-3.5 mr-2 text-white/40" /> Change Status
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="bg-[#1A1B21] border-white/8 text-white">
-            {STATUS_OPTIONS.filter((s) => s !== room.status).map((s) => (
-              <DropdownMenuItem
-                key={s}
-                onClick={() => onStatusChange(room.id, s)}
-                className="text-white/60 text-xs cursor-pointer focus:bg-white/5 focus:text-white"
-              >
-                {pendingKey === room.id + s ? (
-                  <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                ) : (
-                  <span className="w-3 h-3 mr-2" />
-                )}
-                {s.replace(/_/g, " ")}
+            <DropdownMenuItem disabled className="text-white/40 text-xs">
+              Current: {room.status.replace(/_/g, " ")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-white/5" />
+            {isLoading ? (
+              <DropdownMenuItem disabled className="text-white/60 text-xs">
+                Loading statuses...
               </DropdownMenuItem>
-            ))}
+            ) : statusOptions.filter((option) => option.value !== room.status).length === 0 ? (
+              <DropdownMenuItem disabled className="text-white/60 text-xs">
+                No statuses available
+              </DropdownMenuItem>
+            ) : (
+              statusOptions.filter((option) => option.value !== room.status).map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => onStatusChange(room.id, option.value)}
+                  className="text-white/60 text-xs cursor-pointer focus:bg-white/5 focus:text-white"
+                >
+                  {pendingKey === room.id + option.value ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                  ) : (
+                    <span className="w-3 h-3 mr-2" />
+                  )}
+                  {option.label}
+                </DropdownMenuItem>
+              ))
+            )}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
 

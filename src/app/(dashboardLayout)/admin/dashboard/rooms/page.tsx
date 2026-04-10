@@ -24,6 +24,7 @@ import { UploadImagesDialog } from "@/components/admin/Room/UploadImagesDialog";
 import { AddPricingRuleDialog } from "@/components/admin/Room/AddPricingRuleDialog";
 import { CategoryModal } from "@/components/admin/Room/CategoryModal";
 import { AmenityModal } from "@/components/admin/Room/AmenityModal";
+import { RoomImage } from "@/components/admin/Room/RoomImage";
 
 const LIMIT = 10;
 export const roomKeys = {
@@ -63,6 +64,15 @@ export default function AdminRoomsPage() {
     queryKey: currentKey,
     queryFn: () => roomService.getAll(params),
     placeholderData: (p) => p,
+  });
+  // Statuses fetching
+  const { data: statusRes = [] } = useQuery<unknown[], unknown>({
+    queryKey: ["room-statuses"],
+    queryFn: async () => {
+      const response = await roomService.getStatuses();
+      const raw = response.data?.data ?? response.data ?? [];
+      return Array.isArray(raw) ? raw : [];
+    },
   });
 
   const { data: statsRes } = useQuery({
@@ -112,7 +122,10 @@ export default function AdminRoomsPage() {
     return [];
   })();
 
-  const total = roomRes?.data?.total || roomRes?.data?.data?.total || 0;
+  const total = (() => {
+    const value = roomRes?.data?.total ?? roomRes?.data?.data?.total ?? 0;
+    return typeof value === "number" ? value : 0;
+  })();
   const stats = statsRes?.data?.data || {};
   const byStatus = Object.fromEntries(
     (stats.byStatus ?? []).map((s: any) => [
@@ -123,6 +136,18 @@ export default function AdminRoomsPage() {
 
   // ── Table Columns ───────────────────────────────────────────
   const columns: Column<Room>[] = [
+    {
+      key: "images",
+      header: "Preview",
+      render: (_, r) => (
+        <RoomImage
+  imageUrl={r.images?.[0]?.imageUrl}
+  images={r.images}
+  roomId={r.id}
+  alt={`Room ${r.roomNumber}`}
+/>
+      ),
+    },
     {
       key: "roomNumber",
       header: "Room No.",
@@ -155,6 +180,7 @@ export default function AdminRoomsPage() {
     {
       key: "id",
       header: "Actions",
+      className: "text-right",
       render: (_, r) => (
         <RoomActions
           room={r}
@@ -217,11 +243,32 @@ export default function AdminRoomsPage() {
               {
                 key: "status",
                 label: "Status",
-                options: [
-                  { label: "Available", value: "AVAILABLE" },
-                  { label: "Occupied", value: "OCCUPIED" },
-                  { label: "Cleaning", value: "CLEANING" },
-                ],
+                options: Array.isArray(statusRes)
+                  ? statusRes
+                      .map((s: any) => {
+                        if (typeof s === "string") {
+                          return { label: s.replace(/_/g, " "), value: s };
+                        }
+                        if (s && typeof s === "object") {
+                          const value = s.value ?? s.status ?? s.name ?? s.key;
+                          const label =
+                            s.label ??
+                            s.name ??
+                            (typeof value === "string"
+                              ? value.replace(/_/g, " ")
+                              : "");
+                          return typeof value === "string"
+                            ? { label, value }
+                            : null;
+                        }
+                        return null;
+                      })
+                      .filter(Boolean)
+                  : [
+                      { label: "Available", value: "AVAILABLE" },
+                      { label: "Occupied", value: "OCCUPIED" },
+                      { label: "Cleaning", value: "CLEANING" },
+                    ],
               },
               {
                 key: "type",
