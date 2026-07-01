@@ -9,56 +9,59 @@ interface RoomPricingCTAProps {
 }
 
 export default function RoomPricingCTA({ room, router }: RoomPricingCTAProps) {
-  // AVAILABLE STATE
-  if (room.status === "AVAILABLE") {
-    return (
-      <div className="sticky bottom-6 z-50">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0B0C10]/90 border-2 border-[#37EFD1] rounded-xl px-6 py-5 shadow-xl backdrop-blur-md">
-          {/* Price Info */}
-          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
-            <p className="text-xs uppercase tracking-wide text-[#37EFD1]/70">
+  const isAvailable = room.status === "AVAILABLE";
+
+  return (
+    <div className="w-full mt-8 md:mt-0">
+      {isAvailable ? (
+        <div className="bg-[#1A1B21] border border-white/10 rounded-2xl p-6 shadow-2xl">
+          {/* Price Header */}
+          <div className="mb-6">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
               Starting from
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#37EFD1]">
+              <span className="text-4xl font-display font-semibold text-white">
                 RM {room.category?.basePrice?.toLocaleString() ?? "—"}
               </span>
-              <span className="text-sm text-[#37EFD1]/70">/ night</span>
+              <span className="text-sm text-white/40">/ night</span>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-3 sm:mt-0">
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 px-4 py-2 border-2 border-[#37EFD1] text-[#37EFD1] hover:bg-[#37EFD1]/10 hover:text-[#00ffd5]"
-              onClick={() => router.back()}
+          <div className="flex flex-col gap-3">
+            <Button 
+              className="w-full h-12 bg-[#37EFD1] hover:bg-[#2de0c2] text-[#0B0C10] font-bold text-lg" 
+              onClick={() => router.push(`/book/${room.id}`)}
             >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-
-            <Button className="flex items-center gap-2 px-4 py-2 bg-[#00ffd5] hover:bg-[#03ffd5] text-[#0B0C10] font-semibold shadow-md transition-all"  onClick={() => router.push(`/book/${room.id}`)}>
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-4 w-4 mr-2" />
               Book Now
             </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full h-12 border-white/10 bg-transparent text-white hover:bg-white/5 hover:text-white"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Return to Gallery
+            </Button>
+          </div>
+
+          <p className="text-[10px] text-center text-white/20 mt-6 italic">
+            *Complimentary breakfast included
+          </p>
+        </div>
+      ) : (
+        /* Unavailable state */
+        <div className="flex items-center gap-4 rounded-xl border border-white/5 bg-white/5 p-6">
+          <Clock className="h-8 w-8 text-white/20" />
+          <div>
+            <p className="text-white font-medium">Room Unavailable</p>
+            <p className="text-sm text-white/40">Currently in {room.status?.toLowerCase().replace(/_/g, " ")} status.</p>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // UNAVAILABLE STATE
-  return (
-    <div className="flex items-center gap-4 rounded-3xl border-2 border-[#37EFD1] bg-[#37EFD1]/10 shadow-md mt-4">
-      <Clock className="h-6 w-6 text-[#37EFD1]" />
-      <div className="flex flex-col">
-        <p className="text-sm font-semibold text-[#37EFD1]">Room Unavailable</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          This room is currently{" "}
-          <strong>{room.status?.toLowerCase().replace(/_/g, " ")}</strong>.
-        </p>
-      </div>
+      )}
     </div>
   );
 }

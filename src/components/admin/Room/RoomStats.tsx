@@ -16,6 +16,8 @@ export function RoomStats({ total, byStatus }: RoomStatsProps) {
     { label: "Out of Order", value: byStatus.OUT_OF_ORDER ?? 0, color: "#6b7280" },
   ];
 
+  console.log(total);
+  
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       {statsConfig.map((s) => (

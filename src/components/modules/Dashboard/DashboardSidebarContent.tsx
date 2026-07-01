@@ -64,6 +64,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Notifications',href: '/staff/dashboard/notifications',        icon: Bell,            roles: ['STAFF', 'MAINTENANCE', 'CHEF'],       group: 'Notifications'},
   // ── System ───────────────────────────────────────────────
   { label: 'System',       href: '/admin/dashboard/system',               icon: Settings,        roles: ['ADMIN'],                              group: 'System'      },
+  { label: 'Settings',     href: '/admin/dashboard/settings',             icon: Settings,        roles: ['ADMIN'],                              group: 'System'      },
 ];
 
 const ROLE_CONFIG: Record<Role, { label: string; color: string; bg: string }> = {

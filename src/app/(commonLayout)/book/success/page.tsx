@@ -1,11 +1,14 @@
 'use client';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { CheckCircle, Calendar, ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
 export default function BookingSuccessPage() {
   const searchParams = useSearchParams();
-  const router       = useRouter();
-  const bookingId    = searchParams.get('bookingId');
+  const router = useRouter();
+  const bookingId = searchParams.get('bookingId');
+ 
+  const bookingNumber = searchParams.get('bookingNumber');
 
   return (
     <div className="min-h-screen bg-[#0B0C10] flex items-center justify-center px-4">
@@ -17,10 +20,11 @@ export default function BookingSuccessPage() {
         <p className="text-white/40 font-sans text-sm mb-8">
           Your reservation has been successfully placed. You will receive a confirmation email shortly.
         </p>
-        {bookingId && (
+        {/* ✅ bookingNumber দেখাও, id না */}
+        {bookingNumber && (
           <div className="bg-[#1A1B21] border border-white/8 rounded-xl px-5 py-4 mb-6 inline-block">
             <p className="text-white/40 text-xs font-sans">Booking Reference</p>
-            <p className="text-[#37EFD1] font-mono text-sm mt-1">{bookingId}</p>
+            <p className="text-[#37EFD1] font-mono text-sm mt-1">{bookingNumber}</p>
           </div>
         )}
         <div className="flex gap-3 justify-center">

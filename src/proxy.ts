@@ -1,16 +1,4 @@
-/**
- * Next.js Middleware — Role-based route protection
- *
- * Runs on the Edge runtime on every matched request.
- * Reads accessToken / refreshToken from cookies (NOT localStorage — middleware
- * cannot access the browser's localStorage).
- *
- * Rules enforced:
- *  1. Logged-in users → cannot visit auth pages (redirect to their dashboard)
- *  2. Unauthenticated users → cannot visit protected routes (redirect to /login)
- *  3. Role-mismatch → /admin/* for non-ADMIN, etc. → redirect to own dashboard
- *  4. Proactive token refresh when token is within 2 min of expiry
- */
+
 
 import { NextRequest, NextResponse } from 'next/server';
 import type { Role } from '@/types';
@@ -119,7 +107,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // ── Rule 3: Protected route, not logged in → redirect to /login ────────────
   if (!accessToken || !isValidToken) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathWithQuery);
     const response = NextResponse.redirect(loginUrl);
     // Clear any stale / expired cookies

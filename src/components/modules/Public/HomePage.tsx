@@ -11,19 +11,6 @@ import OffersSection from '@/components/home/OffersSection';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
 import CTASection from '@/components/home/CTASection';
 
-const HIGHLIGHTS = [
-  { icon: BedDouble, label: '526 Rooms', sub: 'Water chalets & villas', col: '#37EFD1' },
-  { icon: Utensils,  label: '6 Restaurants', sub: 'World-class dining', col: '#C8102E' },
-  { icon: Waves,    label: '160m Pool', sub: 'Longest overwater pool', col: '#37EFD1' },
-  { icon: Award,    label: 'Award Winning', sub: 'Regional luxury resort', col: '#C8102E' },
-];
-
-const OFFERS = [
-  { title: 'Honeymoon Escape', badge: 'Romance', save: 'Save 20%', desc: 'Romantic overwater stay with champagne breakfast & couple spa.', color: '#C8102E' },
-  { title: 'Family Fun Package', badge: 'Family', save: 'Up to 30% Off', desc: 'Kids stay & eat free. Water sports and pool activities included.', color: '#37EFD1' },
-  { title: 'Early Bird Offer', badge: 'Advance', save: 'Up to 35% Off', desc: 'Book 60 days ahead for the deepest discounts and complimentary upgrade.', color: '#C8102E' },
-];
-
 const DINING = [
   { name: 'Seahorse', type: 'Seafood & Grill', location: 'Overwater Deck', emoji: '🦞', reservation: true },
   { name: 'The Hibiscus', type: 'Malaysian & Asian', location: 'Garden Terrace', emoji: '🍛', reservation: false },

@@ -1,102 +1,271 @@
 'use client';
+
 import { useState, useEffect, useCallback } from 'react';
-import { Wrench, Loader2, UserCheck } from 'lucide-react';
-import DataTable, { Column } from '@/components/shared/table/DataTable';
-import DataTableSearch from '@/components/shared/table/DataTableSearch';
-import DataTableFilters from '@/components/shared/table/DataTableFilters';
+import { Loader2, Plus } from 'lucide-react';
+
+import DataTable from '@/components/shared/table/DataTable';
 import DataTablePagination from '@/components/shared/table/DataTablePagination';
-import StatusBadgeCell from '@/components/shared/cell/StatusBadgeCell';
-import DateCell from '@/components/shared/cell/DateCell';
-import StatsCard from '@/components/shared/StatsCard';
+
 import { maintenanceService } from '@/service/maintenance.service';
-import type { MaintenanceLog } from '@/types';
 import { parseMaintenanceStats } from '@/lib/statsUtils';
 
-export default function AdminMaintenancePage() {
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ status: '', priority: '' });
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<MaintenanceLog[]>([]);
-  const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+import MaintenanceTicketModal from '@/components/maintenance/MaintenanceTicketModal';
+import MaintenanceEditPanel from '@/components/maintenance/MaintenanceEditPanel';
+import CreateHousekeepingModal from '@/components/maintenance/CreateHousekeepingModal';
+import CreateMaintenanceModal from '@/components/maintenance/Createmaintenancemodal';
 
+import MaintenanceTabs, { MaintenanceTab } from '@/components/maintenance/Maintenancetabs';
+import { useMaintenanceColumns } from '@/components/maintenance/Usemaintenancecolumns';
+import { useHousekeepingColumns } from '@/components/maintenance/Usehousekeepingcolumns';
+import MaintenanceStatsRow from '@/components/maintenance/Maintenancestatsrow';
+
+import type { MaintenanceStats } from '@/types';
+
+function unwrapList<T = any>(res: any): T[] {
+  const root = res?.data;
+  if (Array.isArray(root?.data)) return root.data;
+  if (Array.isArray(root?.data?.tickets)) return root.data.tickets;
+  if (Array.isArray(root?.data?.logs)) return root.data.logs;
+  return [];
+}
+
+function unwrapMeta(res: any): { total: number } {
+  const root = res?.data;
+  return root?.meta ?? root?.data?.meta ?? { total: 0 };
+}
+
+export default function AdminMaintenancePage() {
+  const [activeTab, setActiveTab] = useState<MaintenanceTab>('MAINTENANCE');
+  const [page, setPage] = useState(1);
+
+  const [data, setData] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState('');
+
+  const [viewTicket, setViewTicket] = useState<any | null>(null);
+  const [editTicket, setEditTicket] = useState<any | null>(null);
+
+  const [showCreateMaintenance, setShowCreateMaintenance] = useState(false);
+  const [showCreateHousekeeping, setShowCreateHousekeeping] = useState(false);
+
+  const [startingId, setStartingId] = useState<string | null>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+
+  // ✅ FULL TYPE SAFE STATE
+  const [stats, setStats] = useState<MaintenanceStats>({
+    total: 0,
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+    cancelled: 0,
+    overduePending: 0,
+    byStatus: {},
+    byPriority: {},
+    byType: {},
+  });
+
+  console.log('stats',stats)
   const fetchData = useCallback(async () => {
     setLoading(true);
+
     try {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
-      if (filters.status) params.status = filters.status;
-      if (filters.priority) params.priority = filters.priority;
-      const [mRes, sRes] = await Promise.all([maintenanceService.getAll(params), maintenanceService.getStats()]);
-      const d = mRes.data?.data;
-      setData(d?.data || d || []);
-      setTotal(d?.total || 0);
-      setStats(parseMaintenanceStats(sRes.data?.data || {}));
-    } catch { setData([]); }
-    setLoading(false);
-  }, [page, search, filters]);
+      if (activeTab === 'MAINTENANCE') {
+        const [mRes, sRes] = await Promise.all([
+          maintenanceService.getAll({ page, limit: 10 }),
+          maintenanceService.getStats(),
+        ]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+        console.log(sRes.data?.data);
 
-  const handleComplete = async (id: string) => {
-    setActionLoading(id + 'complete');
-    try { await maintenanceService.complete(id); await fetchData(); } catch {}
-    setActionLoading(null);
+        setData(unwrapList(mRes));
+        setTotal(unwrapMeta(mRes).total || 0);
+
+        // ✅ SAFE + FULL OBJECT
+        setStats(sRes.data?.data ?? {});
+      } else {
+        const hRes = await maintenanceService.getHousekeepingLogs({
+          page,
+          limit: 10,
+        });
+
+        setData(unwrapList(hRes));
+        setTotal(unwrapMeta(hRes).total || 0);
+      }
+    } catch (e) {
+      console.error(e);
+      setData([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleStartHousekeeping = async (id: string) => {
+    setStartingId(id);
+    setActionError('');
+
+    try {
+      await maintenanceService.startHousekeeping(id);
+      fetchData();
+    } catch (e: any) {
+      setActionError(
+        e?.response?.data?.message || 'Failed to start housekeeping'
+      );
+    } finally {
+      setStartingId(null);
+    }
   };
 
-  const handleCancel = async (id: string) => {
-    setActionLoading(id + 'cancel');
-    try { await maintenanceService.cancel(id); await fetchData(); } catch {}
-    setActionLoading(null);
+  const handleCompleteHousekeeping = async (id: string) => {
+    setCompletingId(id);
+    setActionError('');
+
+    try {
+      await maintenanceService.completeHousekeeping(id);
+      fetchData();
+    } catch (e: any) {
+      setActionError(
+        e?.response?.data?.message || 'Failed to mark as complete'
+      );
+    } finally {
+      setCompletingId(null);
+    }
   };
 
-  const priorityColor: Record<string, string> = { LOW: '#37EFD1', MEDIUM: '#60a5fa', HIGH: '#fb923c', URGENT: '#C8102E' };
+  const maintenanceColumns = useMaintenanceColumns({
+    onView: setViewTicket,
+    onEdit: setEditTicket,
+  });
 
-  const columns: Column<MaintenanceLog>[] = [
-    { key: 'ticketNumber', header: 'Ticket #', render: (_, r) => <span className="text-[#37EFD1] text-xs font-mono">{r.ticketNumber}</span> },
-    { key: 'title', header: 'Issue', render: (_, r) => <span className="text-white text-sm">{r.title}</span> },
-    { key: 'type', header: 'Type', render: (_, r) => <span className="text-white/50 text-xs">{r.type}</span> },
-    { key: 'priority', header: 'Priority', render: (_, r) => <span className="text-xs font-sans px-2 py-0.5 rounded-full" style={{ color: priorityColor[r.priority], background: priorityColor[r.priority] + '20' }}>{r.priority}</span> },
-    { key: 'status', header: 'Status', render: (_, r) => <StatusBadgeCell status={r.status} /> },
-    { key: 'assignedTo', header: 'Assigned', render: (_, r) => r.assignedTo ? <span className="text-white/60 text-xs">{r.assignedTo.firstName}</span> : <span className="text-white/25 text-xs">Unassigned</span> },
-    { key: 'createdAt', header: 'Reported', render: (_, r) => <DateCell date={r.createdAt} /> },
-    {
-      key: 'id', header: 'Actions', render: (_, r) => (
-        <div className="flex gap-1">
-          {!['COMPLETED', 'CANCELLED'].includes(r.status) && <>
-            <button onClick={() => handleComplete(r.id)} disabled={!!actionLoading} className="text-[9px] px-2 py-0.5 rounded border border-[#37EFD1]/30 text-[#37EFD1] hover:bg-[#37EFD1]/10 transition-all"><UserCheck className="h-3 w-3 inline mr-0.5" />{actionLoading === r.id + 'complete' ? '...' : 'Done'}</button>
-            <button onClick={() => handleCancel(r.id)} disabled={!!actionLoading} className="text-[9px] px-2 py-0.5 rounded border border-[#C8102E]/30 text-[#C8102E] hover:bg-[#C8102E]/10 transition-all">{actionLoading === r.id + 'cancel' ? '...' : 'Cancel'}</button>
-          </>}
-        </div>
-      )
-    },
-  ];
+  const housekeepingColumns = useHousekeepingColumns({
+    startingId,
+    completingId,
+    onStart: handleStartHousekeeping,
+    onComplete: handleCompleteHousekeeping,
+  });
 
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl text-white font-semibold">Maintenance</h1><p className="text-white/35 text-sm font-sans mt-0.5">Track and manage maintenance requests</p></div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total Tickets" value={stats.total || 0} icon={Wrench} color="#37EFD1" />
-        <StatsCard title="Pending" value={stats.pending || 0} icon={Wrench} color="#fb923c" />
-        <StatsCard title="In Progress" value={stats.inProgress || 0} icon={Wrench} color="#60a5fa" />
-        <StatsCard title="Completed" value={stats.completed || 0} icon={Wrench} color="#a78bfa" />
-      </div>
-      <div className="bg-[#1A1B21] border border-white/5 rounded-xl p-5">
-        <div className="flex flex-wrap gap-3 mb-4">
-          <DataTableSearch value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search maintenance tickets..." />
-          <DataTableFilters
-            filters={[
-              { key: 'status', label: 'All Statuses', options: [{ label: 'Pending', value: 'PENDING' }, { label: 'In Progress', value: 'IN_PROGRESS' }, { label: 'Completed', value: 'COMPLETED' }, { label: 'On Hold', value: 'ON_HOLD' }] },
-              { key: 'priority', label: 'All Priorities', options: [{ label: 'Low', value: 'LOW' }, { label: 'Medium', value: 'MEDIUM' }, { label: 'High', value: 'HIGH' }, { label: 'Urgent', value: 'URGENT' }] },
-            ]}
-            values={filters} onChange={(k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1); }} onReset={() => { setFilters({ status: '', priority: '' }); setPage(1); }} />
+      <h1 className="font-display text-2xl text-white font-semibold">
+        Maintenance & Housekeeping
+      </h1>
+
+      <MaintenanceTabs
+        active={activeTab}
+        onChange={(tab) => {
+          setActiveTab(tab);
+          setPage(1);
+        }}
+      />
+
+      {actionError && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-lg px-4 py-2.5">
+          {actionError}
         </div>
-        {loading ? <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/30" /></div> : (
-          <><DataTable data={data} columns={columns} /><DataTablePagination page={page} totalPages={Math.ceil(total / 10)} onPage={setPage} total={total} limit={10} /></>
+      )}
+
+      {activeTab === 'MAINTENANCE' && (
+        <MaintenanceStatsRow stats={stats} />
+      )}
+
+      <div className="bg-[#1A1B21] border border-white/5 rounded-xl p-5">
+        {/* Header */}
+        {activeTab === 'MAINTENANCE' && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-white/50 text-sm">All maintenance tickets</p>
+
+            <button
+              onClick={() => setShowCreateMaintenance(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#37EFD1]/15 border border-[#37EFD1]/25 text-[#37EFD1] text-xs rounded-lg"
+            >
+              <Plus size={13} /> New Ticket
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'HOUSEKEEPING' && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-white/50 text-sm">
+              All housekeeping activity logs
+            </p>
+
+            <button
+              onClick={() => setShowCreateHousekeeping(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#37EFD1]/15 border border-[#37EFD1]/25 text-[#37EFD1] text-xs rounded-lg"
+            >
+              <Plus size={13} /> New Log
+            </button>
+          </div>
+        )}
+
+        {/* Table */}
+        {loading ? (
+          <div className="py-16 text-center">
+            <Loader2
+              className="animate-spin text-white/30 inline"
+              size={24}
+            />
+          </div>
+        ) : data.length === 0 ? (
+          <div className="py-16 text-center text-white/30 text-sm">
+            No records found
+          </div>
+        ) : (
+          <>
+            <DataTable
+              data={data}
+              columns={
+                activeTab === 'MAINTENANCE'
+                  ? maintenanceColumns
+                  : housekeepingColumns
+              }
+            />
+
+            <DataTablePagination
+              page={page}
+              totalPages={Math.ceil(total / 10)}
+              onPage={setPage}
+              total={total}
+              limit={10}
+            />
+          </>
         )}
       </div>
+
+      {/* Modals */}
+      {viewTicket && (
+        <MaintenanceTicketModal
+          ticket={viewTicket}
+          onClose={() => setViewTicket(null)}
+        />
+      )}
+
+      {editTicket && (
+        <MaintenanceEditPanel
+          ticket={editTicket}
+          onClose={() => setEditTicket(null)}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {showCreateMaintenance && (
+        <CreateMaintenanceModal
+          onClose={() => setShowCreateMaintenance(false)}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {showCreateHousekeeping && (
+        <CreateHousekeepingModal
+          onClose={() => setShowCreateHousekeeping(false)}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   );
 }

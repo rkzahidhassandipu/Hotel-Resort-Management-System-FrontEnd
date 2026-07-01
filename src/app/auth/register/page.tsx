@@ -28,33 +28,42 @@ export default function RegisterPage() {
       setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
 
-    if (form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match");
-      setLoading(false);
-      return;
-    }
+  if (loading) return; // prevent double click
+  setLoading(true);
 
-    try {
-      const res = await authService.register({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        email: form.email,
-        password: form.password,
-      });
+  if (form.password !== form.confirmPassword) {
+    toast.error("Passwords do not match");
+    setLoading(false);
+    return;
+  }
 
-      console.log(res.data);
-      toast.success("Account created successfully!");
-      setTimeout(() => (window.location.href = "/auth/login"), 2000);
-    } catch (err: any) {
-      console.log("FULL ERROR:", err?.response?.data);
-      toast.error(err?.response?.data?.message || "Registration failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const res = await authService.register({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      password: form.password,
+    });
+
+    toast.success("Account created successfully!");
+
+    // better than window.location
+    setTimeout(() => {
+      window.location.href = "/auth/login";
+    }, 1200);
+
+  } catch (err: any) {
+    console.log(err?.response?.data);
+
+    toast.error(
+      err?.response?.data?.message || "Registration failed"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#0B0C10] flex items-center justify-center py-10 relative overflow-hidden">

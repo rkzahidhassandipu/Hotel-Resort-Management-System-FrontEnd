@@ -28,17 +28,12 @@ export default function AdminDashboardContent() {
           reportService.getRevenue({}),
         ]);
 
-        // Backend response shape:
-        // { rooms:{total,occupied,available,occupancyRate}, bookings:{todayCheckIns,todayCheckOuts,totalToday,pending},
-        //   revenue:{today,thisMonth}, customers:{total,newThisMonth}, alerts:{pendingMaintenance,...} }
         const d = dRes.data?.data || {};
         setDashboard(d);
 
-        // Revenue timeline: { total, timeline:[{date,amount}], ... }
         const revData = rRes.data?.data || {};
         setRevenueData((revData.timeline as { date: string; amount: number }[]) || []);
 
-        // Room status from dashboard data
         const rooms = (d.rooms as Record<string, number>) || {};
         setRoomStatus([
           { name: 'Occupied',    value: rooms.occupied    || 0, color: '#C8102E' },

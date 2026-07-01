@@ -1,8 +1,4 @@
-/**
- * Edge-runtime safe token helpers.
- * No Node.js APIs (Buffer etc) — uses only Web-compatible primitives.
- * Safe to import from Next.js middleware.
- */
+
 
 /** Decode JWT payload — edge/browser/Node safe */
 export function decodeJwtPayload(token: string): Record<string, unknown> | null {

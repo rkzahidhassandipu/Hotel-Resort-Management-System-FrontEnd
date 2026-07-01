@@ -10,6 +10,18 @@ export const staffService = {
   getAllTasks: (params?: Record<string, unknown>) => httpClient.get('/staff/tasks', { params }),
   createTask: (data: unknown) => httpClient.post('/staff/tasks', data),
   updateTaskStatus: (id: string, status: string) => httpClient.patch(`/staff/tasks/${id}/status`, { status }),
-  addPerformanceReview: (profileId: string, data: unknown) => httpClient.post(`/staff/performance/${profileId}`, data),
-  getPerformanceReviews: (profileId: string) => httpClient.get(`/staff/performance/${profileId}`),
+  addPerformanceReview: (profileId: string, data: {
+  period: string;
+  rating: number;
+  punctuality?: number;
+  productivity?: number;
+  attitude?: number;
+  teamwork?: number;
+  comments?: string;
+  goals?: string;
+}) =>
+  httpClient.post(`/staff/profiles/${profileId}/reviews`, data),
+
+getPerformanceReviews: (profileId: string, params?: Record<string, unknown>) =>
+  httpClient.get(`/staff/profiles/${profileId}/reviews`, { params }),
 };

@@ -2,13 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, Phone } from "lucide-react";
 import { authService } from "@/service/auth.service";
+import type { Role } from "@/types";
+import { getDefaultDashboardRoute } from "@/lib/authUtils";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Rooms & Suites", href: "/rooms-suites" },
+  { label: "Food & Beverage", href: "/food" },
   { label: "Dining", href: "/dining" },
   { label: "Facilities", href: "/facilities" },
   { label: "Offers", href: "/offers" },
@@ -16,6 +19,8 @@ const NAV_LINKS = [
 
 export default function PublicNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
+
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -26,7 +31,7 @@ export default function PublicNavbar() {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  // ✅ check logged in user
+  // ✅ fetch user
   useEffect(() => {
     authService
       .me()
@@ -36,6 +41,12 @@ export default function PublicNavbar() {
 
   const isHome = pathname === "/";
   const transparent = isHome && !scrolled;
+
+  // 🎯 dashboard route based on role
+  const dashboardRoute =
+    user?.role
+      ? getDefaultDashboardRoute(user.role as Role)
+      : "/dashboard";
 
   return (
     <header
@@ -47,7 +58,7 @@ export default function PublicNavbar() {
     >
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          
+
           {/* logo */}
           <Link href="/" className="text-white font-bold">
             Lexis
@@ -56,7 +67,11 @@ export default function PublicNavbar() {
           {/* desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="text-white/70 px-4 py-2">
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-white/70 px-4 py-2"
+              >
                 {link.label}
               </Link>
             ))}
@@ -71,15 +86,29 @@ export default function PublicNavbar() {
               <Phone className="h-3.5 w-3.5" /> +60 6-647 1188
             </a>
 
-            {/* ✅ logged in হলে profile */}
+            {/* ✅ LOGGED IN USER */}
             {user ? (
-              <Link
-                href="/dashboard"
-                className="text-white hover:text-[#37EFD1] text-sm px-3"
-              >
-                {user.firstName || "Profile"}
-              </Link>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => router.push(dashboardRoute)}
+                  className="text-white hover:text-[#37EFD1] text-sm px-3"
+                >
+                  {user.firstName || "Dashboard"}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    await authService.logout?.();
+                    setUser(null);
+                    router.push("/auth/login")
+                  }}
+                  className="text-red-400 text-sm"
+                >
+                  Logout
+                </button>
+              </div>
             ) : (
+              // ❌ NOT LOGGED IN
               <>
                 <Link
                   href="/auth/login"

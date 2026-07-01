@@ -108,6 +108,7 @@ export default function AdminFoodManager() {
     queryKey: ['menu'],
     queryFn: async () => normalizeMenuData(await foodService.getMenu()),
   });
+  console.log(menuData)
 
   const categories = menuData?.categories || [];
   const allItems = menuData?.items || [];

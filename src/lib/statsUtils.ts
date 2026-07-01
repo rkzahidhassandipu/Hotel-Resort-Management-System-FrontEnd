@@ -62,15 +62,27 @@ export function parsePaymentStats(data: Record<string, unknown>) {
 export function parseMaintenanceStats(data: Record<string, unknown>) {
   const byStatus = parseGroupBy(
     data.byStatus as Array<Record<string, unknown>>,
-    'status', 'status'
+    'status',
+    'status'
   );
+
+  const byPriority = (data.byPriority as Record<string, number>) || {};
+  const byType = (data.byType as Record<string, number>) || {};
+
   return {
-    total:      Object.values(byStatus).reduce((s, v) => s + v, 0),
-    pending:    byStatus['pending']     || 0,
+    total: Object.values(byStatus).reduce((s, v) => s + v, 0),
+
+    pending: byStatus['pending'] || 0,
     inProgress: byStatus['in_progress'] || 0,
-    completed:  byStatus['completed']   || 0,
-    cancelled:  byStatus['cancelled']   || 0,
-    overdue:    Number(data.overduePending || 0),
+    completed: byStatus['completed'] || 0,
+    cancelled: byStatus['cancelled'] || 0,
+
+    // ✅ FIXED NAME
+    overduePending: Number(data.overduePending || 0),
+
+    byStatus,
+    byPriority,
+    byType,
   };
 }
 

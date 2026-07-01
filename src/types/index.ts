@@ -8,9 +8,9 @@ export type PaymentMethod = 'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSF
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED';
 export type OrderType = 'DINE_IN' | 'ROOM_SERVICE' | 'TAKEAWAY';
 export type FoodCategory = 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACKS' | 'BEVERAGES' | 'DESSERTS' | 'SPECIAL';
-export type MaintenanceStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ON_HOLD';
+export type MaintenanceStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type MaintenancePriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-export type MaintenanceType = 'ELECTRICAL' | 'PLUMBING' | 'HVAC' | 'FURNITURE' | 'APPLIANCE' | 'STRUCTURAL' | 'CLEANING' | 'OTHER';
+export type MaintenanceType = 'ELECTRICAL' | 'PLUMBING' | 'HVAC' | 'FURNITURE' | 'CLEANING' | 'OTHER';
 export type StaffTaskStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'OVERDUE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type ServiceRequestStatus = 'PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
@@ -108,22 +108,7 @@ export interface FoodOrder {
   createdAt: string; updatedAt: string; items?: FoodOrderItem[]; customer?: User; booking?: Booking;
   [key: string]: any;
 }
-export interface MaintenanceLog {
-  id: string; ticketNumber: string; roomId?: string; location?: string;
-  type: MaintenanceType; priority: MaintenancePriority; status: MaintenanceStatus;
-  title: string; description: string; reportedById: string; assignedToId?: string;
-  scheduledAt?: string; startedAt?: string; completedAt?: string;
-  estimatedHours?: number; actualHours?: number; cost?: number; notes?: string;
-  images: string[]; createdAt: string; updatedAt: string;
-  room?: Room; reportedBy?: User; assignedTo?: User;
-  [key: string]: any;
-}
-export interface HousekeepingLog {
-  id: string; roomId: string; staffId?: string; date: string; status: string; type: string;
-  startedAt?: string; completedAt?: string; notes?: string; checklist?: Record<string, unknown>;
-  room?: Room; staff?: User;
-  [key: string]: any;
-}
+
 export interface StaffTask {
   id: string; title: string; description?: string; assignedToId: string; createdById: string;
   status: StaffTaskStatus; priority: TaskPriority; dueDate?: string;
@@ -193,3 +178,175 @@ export interface DashboardStats {
 }
 export interface ApiResponse<T> { data: T; message: string; success: boolean; }
 export interface PaginatedResponse<T> { data: T[]; total: number; page: number; limit: number; totalPages: number; }
+
+
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  menuItems?: MenuItem[];
+  _count?: {
+    items: number;
+  };
+}
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  categoryId: string;
+  category?: MenuCategory;
+  isAvailable: boolean;
+  imageUrl?: string;
+  foodCategory: FoodCategory;
+  preparationTime?: number;
+}
+
+export type MenuItemPayload = Omit<MenuItem, "id" | "category">;
+
+export type ByStatusEntry = {
+  status: string;
+  _count: {
+    status: number;
+  };
+};
+
+export type Tab = "orders" | "items" | "categories";
+
+export interface FoodStats {
+  total: number;
+  pending: number;
+  preparing: number;
+  delivered: number;
+  todayRevenue: number;
+}
+
+
+export interface MaintenancePart {
+  id: string;
+  partName: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+
+export interface MaintenanceLog {
+  id: string;
+  ticketNumber: string;
+  roomId?: string | null;
+  location?: string | null;
+  type: MaintenanceType;
+  priority: MaintenancePriority;
+  status: MaintenanceStatus;
+  title: string;
+  description: string;
+  notes?: string | null;
+  actualHours?: number | null;
+  cost?: number | null;
+  scheduledAt?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+  room?: { roomNumber: string; floor?: number; type?: string } | null;
+  reportedBy?: { firstName: string; lastName: string; role?: string };
+  assignedTo?: { firstName: string; lastName: string; role?: string } | null;
+  parts?: MaintenancePart[];
+}
+
+export interface HousekeepingLog {
+  id: string;
+  roomId: string;
+  staffId?: string | null;
+  status: string;
+  type: string;
+  notes?: string | null;
+  checklist?: Record<string, boolean> | null;
+  date: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  room?: { roomNumber: string; floor?: number };
+  staff?: { firstName: string; lastName: string } | null;
+}
+
+export interface MaintenanceStats {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  cancelled: number;
+  byStatus: Record<string, number>;
+  byPriority: Record<string, number>;
+  byType: Record<string, number>;
+  overduePending: number;
+}
+
+export interface StaffOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+}
+
+
+
+
+export interface ServiceRequest {
+  id: string;
+  requestNumber: string;
+  bookingId?: string;
+  customerId: string;
+  assignedToId?: string;
+  type: SRType;
+  status: SRStatus;
+  priority: SRPriority;
+  description?: string;
+  scheduledAt?: string;
+  completedAt?: string;
+  notes?: string;
+  cost?: number;
+  createdAt: string;
+  updatedAt: string;
+  customer?: User;
+  booking?: Booking;
+  assignedTo?: User;
+}
+
+export type SRStatus = 'PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type SRPriority = TaskPriority;
+export type SRType =
+  | 'LAUNDRY' | 'ROOM_SERVICE' | 'EXTRA_TOWELS' | 'EXTRA_PILLOW'
+  | 'WAKE_UP_CALL' | 'TAXI_BOOKING' | 'TOUR_BOOKING' | 'SPA_BOOKING'
+  | 'SPECIAL_ARRANGEMENT' | 'OTHER';
+
+export interface SRStats {
+  pendingCount: number;
+  byStatus: { status: SRStatus; _count: { status: number } }[];
+}
+
+export interface SRListResponse {
+  requests: ServiceRequest[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface SRFilters {
+  status: string;
+  type: string;
+  priority: string;
+  page: string;
+  limit: string;
+}
+
+export const SR_TYPES: SRType[] = [
+  'LAUNDRY', 'ROOM_SERVICE', 'EXTRA_TOWELS', 'EXTRA_PILLOW',
+  'WAKE_UP_CALL', 'TAXI_BOOKING', 'TOUR_BOOKING', 'SPA_BOOKING',
+  'SPECIAL_ARRANGEMENT', 'OTHER',
+];

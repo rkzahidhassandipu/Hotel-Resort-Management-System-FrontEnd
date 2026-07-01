@@ -23,11 +23,15 @@ export default function StaffTasksPage() {
     try {
       const res = await staffService.getMyTasks();
       const d = res.data?.data;
+      console.log("Response:", res);
       const tasks: StaffTask[] = Array.isArray(d) ? d : d?.data || [];
       const filtered = tasks.filter(t => !filters.status || t.status === filters.status);
       setData(filtered.slice((page - 1) * 10, page * 10));
       setTotal(filtered.length);
-    } catch { setData([]); }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      setData([]);
+    }
     setLoading(false);
   }, [page, filters]);
 
@@ -35,7 +39,9 @@ export default function StaffTasksPage() {
 
   const updateStatus = async (id: string, status: string) => {
     setActionLoading(id + status);
-    try { await staffService.updateTaskStatus(id, status); await fetchData(); } catch {}
+    try { await staffService.updateTaskStatus(id, status); await fetchData(); } catch (error) {
+      console.error("Error updating task status:", error);
+    }
     setActionLoading(null);
   };
 

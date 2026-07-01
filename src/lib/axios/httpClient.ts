@@ -1,21 +1,33 @@
 import axios from 'axios';
 import { getCookie, setCookie, deleteCookie } from '@/lib/cookieUtils';
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// ── Public client (no auth) ────────────────────────────────────
+export const publicClient = axios.create({
+  baseURL: BASE_URL,
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// ── Authenticated client ───────────────────────────────────────
 const httpClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: BASE_URL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
 
-// ── Request interceptor: attach accessToken from cookie ────────────────────────
+// Request interceptor — attach token if available
 httpClient.interceptors.request.use((config) => {
   const token = getCookie('accessToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-// ── Response interceptor: auto-refresh on 401 ─────────────────────────────────
+// Response interceptor — silent token refresh on 401
 httpClient.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -25,35 +37,39 @@ httpClient.interceptors.response.use(
       original._retry = true;
 
       const refreshToken = getCookie('refreshToken');
+
       if (refreshToken) {
         try {
           const res = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`,
+            `${BASE_URL}/auth/refresh-token`,
             { refreshToken },
-            { withCredentials: true }
+            { withCredentials: true },
           );
-          const { accessToken, refreshToken: newRefresh } = res.data?.data || res.data;
 
-          // Save refreshed tokens back to cookies
-          setCookie('accessToken',  accessToken,  { days: 1,  sameSite: 'Lax' });
+          const { accessToken, refreshToken: newRefresh } =
+            res.data?.data || res.data;
+
+          setCookie('accessToken', accessToken, { days: 1 });
           if (newRefresh) {
-            setCookie('refreshToken', newRefresh, { days: 7, sameSite: 'Lax' });
+            setCookie('refreshToken', newRefresh, { days: 7 });
           }
 
-          original.headers.Authorization = `Bearer ${accessToken}`;
+          original.headers = {
+            ...original.headers,
+            Authorization: `Bearer ${accessToken}`,
+          };
+
           return httpClient(original);
         } catch {
+          // Refresh failed — clear tokens silently, no redirect
           deleteCookie('accessToken');
           deleteCookie('refreshToken');
-          if (typeof window !== 'undefined') window.location.href = '/login';
         }
-      } else {
-        if (typeof window !== 'undefined') window.location.href = '/login';
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default httpClient;

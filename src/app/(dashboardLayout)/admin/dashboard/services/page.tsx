@@ -1,101 +1,102 @@
-'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { Bell, Loader2 } from 'lucide-react';
-import DataTable, { Column } from '@/components/shared/table/DataTable';
-import DataTableSearch from '@/components/shared/table/DataTableSearch';
-import DataTableFilters from '@/components/shared/table/DataTableFilters';
-import DataTablePagination from '@/components/shared/table/DataTablePagination';
-import StatusBadgeCell from '@/components/shared/cell/StatusBadgeCell';
-import DateCell from '@/components/shared/cell/DateCell';
-import StatsCard from '@/components/shared/StatsCard';
-import { serviceRequestService } from '@/service/service-request.service';
-import type { ServiceRequest } from '@/types';
+"use client";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, RefreshCw, Loader2 } from "lucide-react";
+import { serviceRequestService } from "@/service/service-request.service";
+import ServiceRequestsStats from "@/components/service-requests/ServiceRequestsStats";
+import ServiceRequestsFilters from "@/components/service-requests/ServiceRequestsFilters";
+import ServiceRequestsTable from "@/components/service-requests/ServiceRequestsTable";
+import CreateRequestModal from "@/components/service-requests/CreateRequestModal";
+import DetailModal from "@/components/service-requests/DetailModal";
+import { ServiceRequest, SRStatus } from "@/types/servicesTypes";
 
-export default function AdminServicesPage() {
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ status: '', type: '' });
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<ServiceRequest[]>([]);
-  const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+interface Filters {
+  status: string; type: string; priority: string; page: string; limit: string;
+}
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
-      if (filters.status) params.status = filters.status;
-      if (filters.type) params.type = filters.type;
-      const [sRes, statsRes] = await Promise.all([serviceRequestService.getAll(params), serviceRequestService.getStats()]);
-      const d = sRes.data?.data;
-      setData(d?.data || d || []);
-      setTotal(d?.total || 0);
-      const rawSS = statsRes.data?.data || {};
-      const bySRS: Record<string,number> = {};
-      for (const s of (rawSS.byStatus || []) as Array<Record<string,unknown>>) {
-        const k = String(s.status || '').toLowerCase();
-        bySRS[k] = Number((s._count as Record<string,unknown>)?.status ?? 0);
-      }
-      setStats({
-        total:      Object.values(bySRS).reduce((a,b) => a+b, 0),
-        pending:    bySRS['pending']     || Number(rawSS.pendingCount || 0),
-        inProgress: bySRS['in_progress'] || 0,
-        completed:  bySRS['completed']   || 0,
-      });
-    } catch { setData([]); }
-    setLoading(false);
-  }, [page, search, filters]);
+export default function ServiceRequestsPage() {
+  const qc = useQueryClient();
+  const [showCreate, setShowCreate] = useState(false);
+  const [selected, setSelected] = useState<ServiceRequest | null>(null);
+  const [filters, setFilters] = useState<Filters>({ status: "", type: "", priority: "", page: "1", limit: "10" });
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => Boolean(v)));
 
-  const updateStatus = async (id: string, status: string) => {
-    setActionLoading(id + status);
-    try { await serviceRequestService.updateStatus(id, status); await fetchData(); } catch {}
-    setActionLoading(null);
-  };
-
-  const columns: Column<ServiceRequest>[] = [
-    { key: 'requestNumber', header: 'Request #', render: (_, r) => <span className="text-[#37EFD1] text-xs font-mono">{r.requestNumber}</span> },
-    { key: 'type', header: 'Type', render: (_, r) => <span className="text-white/60 text-xs">{r.type.replace(/_/g, ' ')}</span> },
-    { key: 'customer', header: 'Guest', render: (_, r) => r.customer ? <span className="text-white text-sm">{r.customer.firstName} {r.customer.lastName}</span> : <span className="text-white/40">—</span> },
-    { key: 'priority', header: 'Priority', render: (_, r) => <span className={`text-xs px-2 py-0.5 rounded-full ${r.priority === 'URGENT' ? 'bg-[#C8102E]/15 text-[#C8102E]' : r.priority === 'HIGH' ? 'bg-[#fb923c]/15 text-[#fb923c]' : 'bg-white/5 text-white/40'}`}>{r.priority}</span> },
-    { key: 'status', header: 'Status', render: (_, r) => <StatusBadgeCell status={r.status} /> },
-    { key: 'createdAt', header: 'Created', render: (_, r) => <DateCell date={r.createdAt} /> },
-    {
-      key: 'id', header: 'Actions', render: (_, r) => (
-        <div className="flex gap-1">
-          {r.status === 'PENDING' && <button onClick={() => updateStatus(r.id, 'IN_PROGRESS')} disabled={!!actionLoading} className="text-[9px] px-2 py-0.5 rounded border border-[#60a5fa]/30 text-[#60a5fa] hover:bg-[#60a5fa]/10 transition-all">{actionLoading === r.id + 'IN_PROGRESS' ? '...' : 'Start'}</button>}
-          {r.status === 'IN_PROGRESS' && <button onClick={() => updateStatus(r.id, 'COMPLETED')} disabled={!!actionLoading} className="text-[9px] px-2 py-0.5 rounded border border-[#37EFD1]/30 text-[#37EFD1] hover:bg-[#37EFD1]/10 transition-all">{actionLoading === r.id + 'COMPLETED' ? '...' : 'Complete'}</button>}
-        </div>
-      )
+  const { data: listData, isLoading, refetch } = useQuery({
+    queryKey: ["service-requests", params],
+    queryFn: async () => {
+      const res = await serviceRequestService.getAll(params);
+      return res.data?.data as {
+        requests: ServiceRequest[];
+        meta: { total: number; page: number; limit: number; totalPages: number };
+      };
     },
-  ];
+  });
+
+
+  const { data: statsData } = useQuery({
+    queryKey: ["sr-stats"],
+    queryFn: async () => {
+      const res = await serviceRequestService.getStats();
+      return res.data?.data as {
+        byStatus: { status: SRStatus; _count: { status: number } }[];
+        pendingCount: number;
+      };
+    },
+  });
+
+  const meta = listData?.meta;
 
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl text-white font-semibold">Service Requests</h1><p className="text-white/35 text-sm font-sans mt-0.5">Manage guest service requests</p></div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total Requests" value={stats.total || 0} icon={Bell} color="#37EFD1" />
-        <StatsCard title="Pending" value={stats.pending || 0} icon={Bell} color="#fb923c" />
-        <StatsCard title="In Progress" value={stats.inProgress || 0} icon={Bell} color="#60a5fa" />
-        <StatsCard title="Completed" value={stats.completed || 0} icon={Bell} color="#a78bfa" />
-      </div>
-      <div className="bg-[#1A1B21] border border-white/5 rounded-xl p-5">
-        <div className="flex flex-wrap gap-3 mb-4">
-          <DataTableSearch value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search service requests..." />
-          <DataTableFilters
-            filters={[
-              { key: 'status', label: 'All Statuses', options: [{ label: 'Pending', value: 'PENDING' }, { label: 'Assigned', value: 'ASSIGNED' }, { label: 'In Progress', value: 'IN_PROGRESS' }, { label: 'Completed', value: 'COMPLETED' }] },
-              { key: 'type', label: 'All Types', options: [{ label: 'Laundry', value: 'LAUNDRY' }, { label: 'Room Service', value: 'ROOM_SERVICE' }, { label: 'Spa Booking', value: 'SPA_BOOKING' }, { label: 'Taxi', value: 'TAXI_BOOKING' }] },
-            ]}
-            values={filters} onChange={(k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1); }} onReset={() => { setFilters({ status: '', type: '' }); setPage(1); }} />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl text-white font-semibold">Service Requests</h1>
+          <p className="text-white/35 text-sm font-sans mt-0.5">Manage guest service requests</p>
         </div>
-        {loading ? <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/30" /></div> : (
-          <><DataTable data={data} columns={columns} /><DataTablePagination page={page} totalPages={Math.ceil(total / 10)} onPage={setPage} total={total} limit={10} /></>
+        <div className="flex gap-2">
+          <button onClick={() => refetch()} className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white hover:bg-white/5 transition-all">
+            <RefreshCw size={15} />
+          </button>
+          <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white px-4 py-2 rounded-lg text-sm font-sans transition-all">
+            <Plus size={15} /> New Request
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <ServiceRequestsStats
+        pendingCount={statsData?.pendingCount ?? 0}
+        inProgressCount={statsData?.byStatus.find(s => s.status === "IN_PROGRESS")?._count.status ?? 0}
+        completedCount={statsData?.byStatus.find(s => s.status === "COMPLETED")?._count.status ?? 0}
+        requests={listData}
+      />
+
+      {/* Filters */}
+      <ServiceRequestsFilters filters={filters} onChange={setFilters} />
+
+      {/* Table */}
+      <div className="bg-[#1A1B21] border border-white/5 rounded-xl p-5">
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+          </div>
+        ) : (
+          <ServiceRequestsTable
+            requests={listData}
+            page={Number(filters.page)}
+            total={meta?.total ?? 0}
+            totalPages={meta?.totalPages ?? 1}
+            limit={Number(filters.limit)}
+            onPage={p => setFilters(prev => ({ ...prev, page: String(p) }))}
+            onView={setSelected}
+          />
         )}
       </div>
+
+      {showCreate && <CreateRequestModal onClose={() => setShowCreate(false)} />}
+      {selected && <DetailModal sr={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }

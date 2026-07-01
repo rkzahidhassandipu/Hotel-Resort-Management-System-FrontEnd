@@ -51,11 +51,26 @@ export interface AddRoomModalProps {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const ROOM_TYPES = ["STANDARD", "DELUXE", "SUITE", "VILLA", "PENTHOUSE"] as const;
-const BED_TYPES  = ["SINGLE", "DOUBLE", "QUEEN", "KING", "TWIN"]         as const;
+// ✅ Matches Prisma RoomType enum exactly
+const ROOM_TYPES = [
+  "SINGLE", "DOUBLE", "TWIN", "SUITE",
+  "DELUXE", "PENTHOUSE", "FAMILY", "VILLA",
+] as const;
+
+const BED_TYPES = ["SINGLE", "DOUBLE", "QUEEN", "KING", "TWIN"] as const;
+
+// ✅ LuxeStay Hibiscus Resort views
 const VIEWS = [
-  "Garden View", "Pool View", "Ocean View",
-  "City View", "Mountain View", "Courtyard View",
+  "Hibiscus Garden View",
+  "Lagoon View",
+  "Rainforest View",
+  "Pool View",
+  "Ocean View",
+  "Sunrise View",
+  "Sunset View",
+  "Courtyard View",
+  "City View",
+  "Mountain View",
 ];
 
 const INITIAL_FORM = {
@@ -105,6 +120,16 @@ function FieldError({ msg }: { msg?: string }) {
   );
 }
 
+// ─── Envelope unwrap helper ───────────────────────────────────────────────────
+// Handles: { data: [...] } | { data: { data: [...] } } | [...]
+function unwrapArray<T>(res: unknown): T[] {
+  const root = (res as { data?: unknown })?.data;
+  if (Array.isArray(root)) return root as T[];
+  const nested = (root as { data?: unknown })?.data;
+  if (Array.isArray(nested)) return nested as T[];
+  return [];
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalProps) {
   const [form,   setForm]   = useState(INITIAL_FORM);
@@ -126,8 +151,9 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
     staleTime: 5 * 60 * 1000,
   });
 
-  const categories: RoomCategory[] = Array.isArray(catRes?.data) ? catRes.data : [];
-  const amenities:  Amenity[]      = Array.isArray(amenRes?.data) ? amenRes.data : [];
+  // ✅ Fixed: unwrapArray handles both { data: [...] } and { data: { data: [...] } }
+  const categories: RoomCategory[] = unwrapArray<RoomCategory>(catRes);
+  const amenities:  Amenity[]      = unwrapArray<Amenity>(amenRes);
 
   // ── Reset on open ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -189,21 +215,28 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    createRoom({
-      roomNumber:   form.roomNumber.trim(),
-      floor:        Number(form.floor),
-      type:         form.type,
-      bedType:      form.bedType,
-      maxOccupancy: Number(form.maxOccupancy),
-      ...(form.sizeInSqFt  && { sizeInSqFt:  Number(form.sizeInSqFt) }),
-      categoryId:   form.categoryId,
-      ...(form.description && { description: form.description.trim() }),
-      ...(form.view        && { view:        form.view }),
+
+    const payload: Record<string, unknown> = {
+      roomNumber:     form.roomNumber.trim(),
+      floor:          Number(form.floor),
+      type:           form.type,
+      bedType:        form.bedType,
+      maxOccupancy:   Number(form.maxOccupancy),
+      categoryId:     form.categoryId,
       smokingAllowed: form.smokingAllowed,
       petFriendly:    form.petFriendly,
-      ...(form.notes       && { notes:       form.notes.trim() }),
-      ...(form.amenityIds.length && { amenityIds: form.amenityIds }),
-    });
+      status:         "AVAILABLE",  // ✅ backend required — Prisma RoomStatus default
+      isActive:       true,         // ✅ backend required
+    };
+
+    if (form.sizeInSqFt)  payload.sizeInSqFt  = Number(form.sizeInSqFt);
+    if (form.description) payload.description  = form.description.trim();
+    if (form.view)        payload.view         = form.view;
+    if (form.notes)       payload.notes        = form.notes.trim();
+    if (form.amenityIds.length) payload.amenityIds = form.amenityIds;
+
+    console.log("→ payload", payload); // debug — working হলে remove করো
+    createRoom(payload);
   }
 
   // Group amenities by category
@@ -220,17 +253,12 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      {/*
-        SheetContent side="right" — slides in from the right.
-        Override Shadcn's default width (w-3/4 or sm:max-w-sm) with our own.
-        [&>button]:hidden removes the default close × from SheetContent.
-      */}
       <SheetContent
         side="right"
         className={cn(
           "w-full max-w-xl p-0 flex flex-col gap-0",
           "bg-[#13141A] border-l border-white/6 text-white",
-          "[&>button]:hidden",           // hide Shadcn's built-in close button
+          "[&>button]:hidden",
         )}
       >
         {/* ── Header ──────────────────────────────────────────────── */}
@@ -359,14 +387,22 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
               <FieldLabel>Room Category *</FieldLabel>
               <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v)}>
                 <SelectTrigger className={cn(field, "w-full")}>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder={
+                    categories.length === 0 ? "No categories found" : "Select category"
+                  } />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1A1B21] border-white/8 text-white">
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="focus:bg-white/5 focus:text-white">
-                      {c.name} — RM {Number(c.basePrice).toLocaleString()}/night
-                    </SelectItem>
-                  ))}
+                  {categories.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-white/30 italic">
+                      No categories available
+                    </div>
+                  ) : (
+                    categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="focus:bg-white/5 focus:text-white">
+                        {c.name} — RM {Number(c.basePrice).toLocaleString()}/night
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <FieldError msg={errors.categoryId} />

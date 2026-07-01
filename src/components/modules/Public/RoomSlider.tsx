@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft,
@@ -8,8 +7,11 @@ import {
   Users,
   Maximize,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import { roomService } from "@/service/room.service";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRouter } from "next/navigation";
 
 interface Room {
   id: string;
@@ -26,6 +28,10 @@ interface Room {
 
 export default function RoomSlider() {
   const [active, setActive] = useState(0);
+    const { user, loading: userLoading } = useCurrentUser();
+    
+      const router = useRouter();
+  
 
   const {
     data: rooms = [],
@@ -64,6 +70,16 @@ export default function RoomSlider() {
     rooms[active],
     rooms[(active + 1) % rooms.length],
   ];
+
+
+  const handleViewDetails = (roomId: string) => {
+    if (userLoading) return; // user load হওয়ার আগে click ignore করো
+    if (user) {
+      router.push(`/rooms-suites/${roomId}`);
+    } else {
+      router.push("/auth/register");
+    }
+  };
 
   // ── Pagination dots helper ───────────────────────
   const getVisibleDots = (
@@ -159,13 +175,21 @@ export default function RoomSlider() {
                     {room.guests} Guests
                   </span>
                 </div>
-                <Link
-                  href={`/rooms-suites/${room.id}`}
-                  className="flex items-center gap-1.5 text-sm font-sans font-medium transition-all group-hover:gap-2.5"
-                  style={{ color: room.color }}
-                >
-                  View Details <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                <button
+                      onClick={() => handleViewDetails(room.id)}
+                      className="flex items-center gap-1.5 text-sm font-sans font-medium transition-all group-hover:gap-2.5"
+                      style={{ color: user ? room.color : "#ffffff60" }}
+                    >
+                      {user ? (
+                        <>
+                          View Details <ArrowRight className="h-3.5 w-3.5" />
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-3 w-3" /> Sign in to View
+                        </>
+                      )}
+                    </button>
               </div>
             </div>
           );
