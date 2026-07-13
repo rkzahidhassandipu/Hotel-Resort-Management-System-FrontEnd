@@ -4,6 +4,8 @@ export const bookingService = {
   getAll: (params?: Record<string, unknown>) =>
     httpClient.get("/bookings", { params }),
   getById: (id: string) => httpClient.get(`/bookings/${id}`),
+  getMyBookings: (params?: Record<string, unknown>) =>
+    httpClient.get("/bookings/my", { params }),
   create: (data: unknown) => httpClient.post("/bookings", data),
   confirm: (bookingId: string) =>
     httpClient.patch(`/bookings/${bookingId}/confirm`),

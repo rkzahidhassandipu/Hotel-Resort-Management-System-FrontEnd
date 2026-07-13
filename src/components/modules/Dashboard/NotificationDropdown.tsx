@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Bell, X, CheckCheck } from 'lucide-react';
 import { notificationService } from '@/service/notification.service';
 import type { Notification } from '@/types';
@@ -22,35 +22,74 @@ function timeAgo(date: string) {
   return `${Math.floor(hrs / 24)} days ago`;
 }
 
+// unwraps common API envelope shapes: {data:{count}}, {data:{data:{count}}}, {count}
+function extractCount(res: any): number {
+  return (
+    res?.data?.data?.count ??
+    res?.data?.count ??
+    res?.data?.data ??
+    res?.count ??
+    0
+  );
+}
+
+function extractList(res: any): Notification[] {
+  const data = res?.data?.data?.data ?? res?.data?.data ?? res?.data ?? [];
+  return Array.isArray(data) ? data : [];
+}
+
+const POLL_MS = 15000;
+
 export default function NotificationDropdown() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await notificationService.getMyNotifications({ limit: 10 });
-      const data = res.data?.data?.data || res.data?.data || [];
-      setItems(Array.isArray(data) ? data : []);
-    } catch {}
-  };
+      const list = extractList(res);
+      setItems(list);
+      return list;
+    } catch {
+      return null;
+    }
+  }, []);
 
-  const fetchUnread = async () => {
+  // Always derives unread from BOTH the dedicated count endpoint and the
+  // notification list itself (isRead flags), taking whichever is higher.
+  // This makes the badge reliable even if the count endpoint is broken.
+  const fetchUnread = useCallback(async () => {
+    let apiCount = 0;
     try {
       const res = await notificationService.getUnreadCount();
-      setUnread(res.data?.data?.count || res.data?.count || 0);
+      apiCount = Number(extractCount(res)) || 0;
     } catch {}
-  };
+
+    const list = await fetchNotifications();
+    const listCount = list ? list.filter(n => !n.isRead).length : 0;
+
+    setUnread(Math.max(apiCount, listCount));
+  }, [fetchNotifications]);
 
   useEffect(() => {
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(fetchUnread, POLL_MS);
 
-  useEffect(() => {
-    if (open) fetchNotifications();
-  }, [open]);
+    // refetch instantly when tab regains focus / becomes visible
+    const onFocus = () => fetchUnread();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') fetchUnread();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [fetchUnread]);
 
   const markAll = async () => {
     try {
@@ -70,9 +109,18 @@ export default function NotificationDropdown() {
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)} className="relative w-8 h-8 rounded-full bg-[#1A1B21] border border-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors">
+      <button
+        onClick={() => setOpen(!open)}
+        className="relative w-8 h-8 rounded-full bg-[#1A1B21] border border-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+      >
         <Bell className="h-4 w-4" />
-        {unread > 0 && <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[#C8102E]" />}
+        {unread > 0 && (
+          <span
+            className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#C8102E] text-white text-[9px] font-sans font-semibold flex items-center justify-center leading-none animate-pulse"
+          >
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
       </button>
       {open && (
         <>

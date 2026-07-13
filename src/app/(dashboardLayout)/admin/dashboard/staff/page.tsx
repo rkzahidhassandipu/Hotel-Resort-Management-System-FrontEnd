@@ -20,7 +20,7 @@ export default function AdminStaffManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="pt-6">
         <h1 className="font-display text-2xl text-white font-semibold">Staff Management</h1>
         <p className="text-white/35 text-sm font-sans mt-0.5">Shifts, tasks, and performance</p>
       </div>

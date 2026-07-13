@@ -4,7 +4,8 @@ export const systemService = {
   healthCheck: () => httpClient.get('/system/health'),
   getLogs: (params?: Record<string, unknown>) => httpClient.get('/system/logs', { params }),
   getLogById: (id: string) => httpClient.get(`/system/logs/${id}`),
-  clearOldLogs: () => httpClient.delete('/system/logs/clear'),
+  clearOldLogs: (daysOld = 30) =>
+  httpClient.delete('/system/logs/clear', { data: { daysOld } }),
   getErrors: (params?: Record<string, unknown>) => httpClient.get('/system/errors', { params }),
   getErrorById: (id: string) => httpClient.get(`/system/errors/${id}`),
   resolveError: (id: string) => httpClient.patch(`/system/errors/${id}/resolve`),

@@ -1,9 +1,10 @@
 "use client";
+import { useState } from "react";
 import { 
   X, CreditCard, Mail, MailCheck, Phone, ShieldCheck, 
   User as UserIcon, Cake, Flag, BadgeCheck, BookOpen, 
   MapPin, Building2, Mailbox, Globe, CalendarPlus, 
-  RefreshCw, LogIn, Network 
+  RefreshCw, LogIn, Network, Copy, Check 
 } from "lucide-react";
 import type { User } from "@/types";
 
@@ -19,13 +20,29 @@ function Row({
   value,
   mono,
   badge,
+  copyValue,
 }: {
   icon: React.ElementType;
   label: string;
   value?: string | null;
   mono?: boolean;
   badge?: { text: string; variant: "success" | "danger" | "neutral" };
+  /** If provided, row becomes click-to-copy and this full string is copied (value can stay truncated for display) */
+  copyValue?: string;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!copyValue) return;
+    try {
+      await navigator.clipboard.writeText(copyValue);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard write failed silently
+    }
+  };
+
   return (
     <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-white/[0.07] last:border-b-0">
       <Icon className="h-[15px] w-[15px] text-white/30 shrink-0" />
@@ -43,13 +60,29 @@ function Row({
           {badge.text}
         </span>
       ) : value ? (
-        <span
-          className={`text-[12px] text-white truncate ${
-            mono ? "font-mono" : ""
-          }`}
-        >
-          {value}
-        </span>
+        copyValue ? (
+          <button
+            type="button"
+            onClick={handleCopy}
+            title={copied ? "Copied!" : copyValue}
+            className="group flex items-center gap-1.5 min-w-0 text-[12px] text-white hover:text-white/80 transition-colors"
+          >
+            <span className={`truncate ${mono ? "font-mono" : ""}`}>{value}</span>
+            {copied ? (
+              <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+            ) : (
+              <Copy className="h-3 w-3 text-white/25 group-hover:text-white/50 shrink-0" />
+            )}
+          </button>
+        ) : (
+          <span
+            className={`text-[12px] text-white truncate ${
+              mono ? "font-mono" : ""
+            }`}
+          >
+            {value}
+          </span>
+        )
       ) : (
         <span className="text-[12px] text-white/25 italic">Not set</span>
       )}
@@ -137,7 +170,13 @@ export default function UserDetailDrawer({ user, open, onClose }: Props) {
             {/* scrollable body */}
             <div className="flex-1 overflow-y-auto px-5 pb-6">
               <Section title="Account">
-                <Row icon={UserIcon} label="User ID" value={`${user.id.slice(0, 8)}…${user.id.slice(-6)}`} mono />
+                <Row
+                  icon={UserIcon}
+                  label="User ID"
+                  value={`${user.id.slice(0, 8)}…${user.id.slice(-6)}`}
+                  mono
+                  copyValue={user.id}
+                />
                 <Row icon={Mail} label="Email" value={user.email} />
                 <Row
                   icon={MailCheck}

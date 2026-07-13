@@ -254,7 +254,7 @@ export default function AdminBookingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="pt-5">
         <h1 className="font-display text-2xl text-white font-semibold">
           Bookings
         </h1>

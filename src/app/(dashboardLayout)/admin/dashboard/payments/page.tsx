@@ -133,7 +133,7 @@ export default function AdminPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="pt-5">
         <h1 className="font-display text-2xl text-white font-semibold">
           Payments
         </h1>

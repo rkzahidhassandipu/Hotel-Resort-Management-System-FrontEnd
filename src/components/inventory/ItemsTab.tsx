@@ -44,8 +44,6 @@ export default function ItemsTab() {
   const meta = data?.meta;
   
 
-  console.log("all data",data)
-  console.log("all items",items)
   console.log("all categories",categories)
 
   const columns: Column<InventoryItem>[] = [

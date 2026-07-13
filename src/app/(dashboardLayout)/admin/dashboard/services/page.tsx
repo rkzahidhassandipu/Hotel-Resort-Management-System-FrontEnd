@@ -50,7 +50,7 @@ export default function ServiceRequestsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-6">
         <div>
           <h1 className="font-display text-2xl text-white font-semibold">Service Requests</h1>
           <p className="text-white/35 text-sm font-sans mt-0.5">Manage guest service requests</p>

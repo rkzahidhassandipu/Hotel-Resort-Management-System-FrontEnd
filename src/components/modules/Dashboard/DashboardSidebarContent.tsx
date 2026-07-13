@@ -35,9 +35,10 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Bookings',     href: '/admin/dashboard/bookings',             icon: Calendar,        roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
   { label: 'Payments',     href: '/admin/dashboard/payments',             icon: CreditCard,      roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
   { label: 'Services',     href: '/admin/dashboard/services',             icon: Zap,             roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
+  { label: 'Guests',       href: '/admin/dashboard/guests',               icon: Users,           roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
   // ── People ───────────────────────────────────────────────
   { label: 'Staff',        href: '/admin/dashboard/staff',                icon: Users,           roles: ['ADMIN', 'MANAGER'],                   group: 'People'      },
-  { label: 'Users',        href: '/admin/dashboard/users',                icon: Shield,          roles: ['ADMIN'],                              group: 'People'      },
+  { label: 'Users',        href: '/admin/dashboard/users',                icon: Shield,          roles: ['ADMIN', 'MANAGER'],                   group: 'People'      },
   // ── Food ─────────────────────────────────────────────────
   { label: 'Food & Orders',href: '/admin/dashboard/food',                 icon: ChefHat,         roles: ['ADMIN', 'MANAGER'],                   group: 'Food'        },
   { label: 'Orders',       href: '/chef/dashboard/orders',                icon: ShoppingBag,     roles: ['CHEF'],                               group: 'Food'        },
