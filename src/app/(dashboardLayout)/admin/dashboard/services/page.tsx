@@ -8,31 +8,49 @@ import ServiceRequestsFilters from "@/components/service-requests/ServiceRequest
 import ServiceRequestsTable from "@/components/service-requests/ServiceRequestsTable";
 import CreateRequestModal from "@/components/service-requests/CreateRequestModal";
 import DetailModal from "@/components/service-requests/DetailModal";
-import { ServiceRequest, SRStatus } from "@/types/servicesTypes";
+import { ServiceRequest, ServiceRequestFilters, SRStatus } from "@/types/servicesTypes";
 
 interface Filters {
-  status: string; type: string; priority: string; page: string; limit: string;
+  [key: string]: string;
+  status: string;
+  type: string;
+  priority: string;
+  page: string;
+  limit: string;
 }
 
 export default function ServiceRequestsPage() {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState<ServiceRequest | null>(null);
-  const [filters, setFilters] = useState<Filters>({ status: "", type: "", priority: "", page: "1", limit: "10" });
+  const [filters, setFilters] = useState<ServiceRequestFilters>({
+    status: "",
+    type: "",
+    priority: "",
+    page: "1",
+    limit: "10",
+  });
 
-  const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => Boolean(v)));
+  const params = Object.fromEntries(
+    Object.entries(filters).filter(([, v]) => Boolean(v)),
+  );
 
-  const { data: listData, isLoading, refetch } = useQuery({
+  const {
+    data: listData,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["service-requests", params],
     queryFn: async () => {
       const res = await serviceRequestService.getAll(params);
-      return res.data?.data as {
-        requests: ServiceRequest[];
-        meta: { total: number; page: number; limit: number; totalPages: number };
+      const d = res.data?.data;
+      return {
+        requests: Array.isArray(d) ? d : (d?.requests ?? []),
+        meta: res.data?.meta ??
+          d?.meta ?? { total: 0, page: 1, limit: 10, totalPages: 1 },
       };
     },
   });
-
 
   const { data: statsData } = useQuery({
     queryKey: ["sr-stats"],
@@ -45,21 +63,31 @@ export default function ServiceRequestsPage() {
     },
   });
 
+  const requests = listData?.requests ?? [];
   const meta = listData?.meta;
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between pt-6">
         <div>
-          <h1 className="font-display text-2xl text-white font-semibold">Service Requests</h1>
-          <p className="text-white/35 text-sm font-sans mt-0.5">Manage guest service requests</p>
+          <h1 className="font-display text-2xl text-white font-semibold">
+            Service Requests
+          </h1>
+          <p className="text-white/35 text-sm font-sans mt-0.5">
+            Manage guest service requests
+          </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => refetch()} className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white hover:bg-white/5 transition-all">
+          <button
+            onClick={() => refetch()}
+            className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white hover:bg-white/5 transition-all"
+          >
             <RefreshCw size={15} />
           </button>
-          <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white px-4 py-2 rounded-lg text-sm font-sans transition-all">
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white px-4 py-2 rounded-lg text-sm font-sans transition-all"
+          >
             <Plus size={15} /> New Request
           </button>
         </div>
@@ -68,9 +96,15 @@ export default function ServiceRequestsPage() {
       {/* Stats */}
       <ServiceRequestsStats
         pendingCount={statsData?.pendingCount ?? 0}
-        inProgressCount={statsData?.byStatus.find(s => s.status === "IN_PROGRESS")?._count.status ?? 0}
-        completedCount={statsData?.byStatus.find(s => s.status === "COMPLETED")?._count.status ?? 0}
-        requests={listData}
+        inProgressCount={
+          statsData?.byStatus?.find((s) => s.status === "IN_PROGRESS")?._count
+            .status ?? 0
+        }
+        completedCount={
+          statsData?.byStatus?.find((s) => s.status === "COMPLETED")?._count
+            .status ?? 0
+        }
+        requests={requests}
       />
 
       {/* Filters */}
@@ -84,19 +118,23 @@ export default function ServiceRequestsPage() {
           </div>
         ) : (
           <ServiceRequestsTable
-            requests={listData}
+            requests={requests}
             page={Number(filters.page)}
             total={meta?.total ?? 0}
             totalPages={meta?.totalPages ?? 1}
             limit={Number(filters.limit)}
-            onPage={p => setFilters(prev => ({ ...prev, page: String(p) }))}
+            onPage={(p) => setFilters((prev) => ({ ...prev, page: String(p) }))}
             onView={setSelected}
           />
         )}
       </div>
 
-      {showCreate && <CreateRequestModal onClose={() => setShowCreate(false)} />}
-      {selected && <DetailModal sr={selected} onClose={() => setSelected(null)} />}
+      {showCreate && (
+        <CreateRequestModal onClose={() => setShowCreate(false)} />
+      )}
+      {selected && (
+        <DetailModal sr={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }

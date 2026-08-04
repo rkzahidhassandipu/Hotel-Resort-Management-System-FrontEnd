@@ -31,24 +31,41 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Work Orders',  href: '/maintenance/dashboard',                icon: Wrench,          roles: ['MAINTENANCE'],                        group: 'Overview'    },
   { label: 'Kitchen',      href: '/chef/dashboard',                       icon: ChefHat,         roles: ['CHEF'],                               group: 'Overview'    },
   // ── Operations ──────────────────────────────────────────
-  { label: 'Rooms',        href: '/admin/dashboard/rooms',                icon: BedDouble,       roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
-  { label: 'Bookings',     href: '/admin/dashboard/bookings',             icon: Calendar,        roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
-  { label: 'Payments',     href: '/admin/dashboard/payments',             icon: CreditCard,      roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
-  { label: 'Services',     href: '/admin/dashboard/services',             icon: Zap,             roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
-  { label: 'Guests',       href: '/admin/dashboard/guests',               icon: Users,           roles: ['ADMIN', 'MANAGER'],                   group: 'Operations'  },
+  { label: 'Rooms',        href: '/admin/dashboard/rooms',                icon: BedDouble,       roles: ['ADMIN'],                   group: 'Operations'  },
+  { label: 'Rooms',        href: '/manager/dashboard/rooms',              icon: BedDouble,       roles: [ 'MANAGER'],                   group: 'Operations'  },
+  { label: 'Bookings',     href: '/admin/dashboard/bookings',             icon: Calendar,        roles: ['ADMIN'],                   group: 'Operations'  },
+  { label: 'Bookings',     href: '/manager/dashboard/bookings',           icon: Calendar,        roles: ['MANAGER'],                   group: 'Operations'  },
+  { label: 'Bookings',     href: '/staff/dashboard/bookings',             icon: Calendar,        roles: ['STAFF'],                   group: 'Operations'  },
+
+  { label: 'Payments',     href: '/admin/dashboard/payments',             icon: CreditCard,      roles: ['ADMIN'],                   group: 'Operations'  },
+  { label: 'Payments',     href: '/manager/dashboard/payments',             icon: CreditCard,      roles: ['MANAGER'],                   group: 'Operations'  },
+
+  { label: 'Services',     href: '/admin/dashboard/services',             icon: Zap,             roles: ['ADMIN'],                 group: 'Operations'  },
+  { label: 'Services',     href: '/manager/dashboard/services',             icon: Zap,             roles: ['MANAGER'],                 group: 'Operations'  },
+  { label: 'Services',     href: '/staff/dashboard/services',             icon: Zap,             roles: ['STAFF'],                 group: 'Operations'  },
+  { label: 'Guests',       href: '/admin/dashboard/guests',               icon: Users,           roles: ['ADMIN'],                   group: 'Operations'  },
+  { label: 'Guests',       href: '/manager/dashboard/guests',             icon: Users,           roles: ['MANAGER'],                   group: 'Operations'  },
+  { label: 'Guests',       href: '/staff/dashboard/guests',               icon: Users,           roles: ['STAFF'],                   group: 'Operations'  },
   // ── People ───────────────────────────────────────────────
-  { label: 'Staff',        href: '/admin/dashboard/staff',                icon: Users,           roles: ['ADMIN', 'MANAGER'],                   group: 'People'      },
+  { label: 'Staff',        href: '/admin/dashboard/staff',                icon: Users,           roles: ['ADMIN'],                   group: 'People'      },
+  { label: 'Staff',        href: '/manager/dashboard/staff',              icon: Users,           roles: ['MANAGER'],                   group: 'People'      },
+
   { label: 'Users',        href: '/admin/dashboard/users',                icon: Shield,          roles: ['ADMIN', 'MANAGER'],                   group: 'People'      },
   // ── Food ─────────────────────────────────────────────────
-  { label: 'Food & Orders',href: '/admin/dashboard/food',                 icon: ChefHat,         roles: ['ADMIN', 'MANAGER'],                   group: 'Food'        },
+  { label: 'Food & Orders',href: '/admin/dashboard/food',                 icon: ChefHat,         roles: ['ADMIN',],                   group: 'Food'        },
+  { label: 'Food & Orders',href: '/manager/dashboard/food',               icon: ChefHat,         roles: [ 'MANAGER'],                   group: 'Food'        },
+  { label: 'Food & Orders',href: '/chef/dashboard/food',               icon: ChefHat,         roles: [ 'CHEF'],                   group: 'Food'        },
   { label: 'Orders',       href: '/chef/dashboard/orders',                icon: ShoppingBag,     roles: ['CHEF'],                               group: 'Food'        },
   { label: 'Menu',         href: '/chef/dashboard/menu',                  icon: ChefHat,         roles: ['CHEF'],                               group: 'Food'        },
   // ── Facilities ───────────────────────────────────────────
-  { label: 'Maintenance',  href: '/admin/dashboard/maintenance',          icon: Wrench,          roles: ['ADMIN', 'MANAGER'],                   group: 'Facilities'  },
-  { label: 'Inventory',    href: '/admin/dashboard/inventory',            icon: Package,         roles: ['ADMIN', 'MANAGER'],                   group: 'Facilities'  },
+  { label: 'Maintenance',  href: '/admin/dashboard/maintenance',          icon: Wrench,          roles: ['ADMIN'],                   group: 'Facilities'  },
+  { label: 'Maintenance',  href: '/manager/dashboard/maintenance',          icon: Wrench,          roles: [ 'MANAGER'],                   group: 'Facilities'  },
+  { label: 'Inventory',    href: '/admin/dashboard/inventory',            icon: Package,         roles: ['ADMIN'],                   group: 'Facilities'  },
+  { label: 'Inventory',    href: '/manager/dashboard/inventory',          icon: Package,         roles: ['MANAGER'],                   group: 'Facilities'  },
   // ── Work (Staff / Maintenance) ───────────────────────────
   { label: 'Tasks',        href: '/staff/dashboard/tasks',                icon: ClipboardList,   roles: ['STAFF'],                              group: 'Work'        },
-  { label: 'Housekeeping', href: '/maintenance/dashboard/housekeeping',   icon: Building2,       roles: ['MAINTENANCE', 'STAFF'],               group: 'Work'        },
+  { label: 'Housekeeping', href: '/maintenance/dashboard/housekeeping',   icon: Building2,       roles: ['MAINTENANCE',],               group: 'Work'        },
+  { label: 'Housekeeping', href: '/staff/dashboard/housekeeping',   icon: Building2,       roles: [ 'STAFF'],               group: 'Work'        },
   { label: 'Requests',     href: '/maintenance/dashboard/requests',       icon: ClipboardList,   roles: ['MAINTENANCE'],                        group: 'Work'        },
   // ── Guest ────────────────────────────────────────────────
   { label: 'My Bookings',  href: '/customer/dashboard/bookings',          icon: Calendar,        roles: ['CUSTOMER'],                           group: 'Guest'       },
@@ -57,12 +74,14 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'My Reviews',   href: '/customer/dashboard/reviews',           icon: Star,            roles: ['CUSTOMER'],                           group: 'Guest'       },
   { label: 'Profile',      href: '/customer/dashboard/profile',           icon: Users,           roles: ['CUSTOMER'],                           group: 'Guest'       },
   // ── Insights ─────────────────────────────────────────────
-  { label: 'Reviews',      href: '/admin/dashboard/reviews',              icon: Star,            roles: ['ADMIN', 'MANAGER'],                   group: 'Insights'    },
+  { label: 'Reviews',      href: '/admin/dashboard/reviews',              icon: Star,            roles: ['ADMIN'],                   group: 'Insights'    },
+    { label: 'Reviews',      href: '/manager/dashboard/reviews',              icon: Star,            roles: [ 'MANAGER'],                   group: 'Insights'    },
   { label: 'Reports',      href: '/admin/dashboard/reports',              icon: BarChart3,       roles: ['ADMIN', 'MANAGER'],                   group: 'Insights'    },
   // ── Notifications ────────────────────────────────────────
-  { label: 'Notifications',href: '/admin/dashboard/notifications',        icon: Bell,            roles: ['ADMIN', 'MANAGER'],                   group: 'Notifications'},
+  { label: 'Notifications',href: '/admin/dashboard/notifications',        icon: Bell,            roles: ['ADMIN'],                   group: 'Notifications'},
   { label: 'Notifications',href: '/customer/dashboard/notifications',     icon: Bell,            roles: ['CUSTOMER'],                           group: 'Notifications'},
   { label: 'Notifications',href: '/staff/dashboard/notifications',        icon: Bell,            roles: ['STAFF', 'MAINTENANCE', 'CHEF'],       group: 'Notifications'},
+  { label: 'Notifications',href: '/manager/dashboard/notifications',      icon: Bell,            roles: ['MANAGER'],                            group: 'Notifications'},
   // ── System ───────────────────────────────────────────────
   { label: 'System',       href: '/admin/dashboard/system',               icon: Settings,        roles: ['ADMIN'],                              group: 'System'      },
   { label: 'Settings',     href: '/admin/dashboard/settings',             icon: Settings,        roles: ['ADMIN'],                              group: 'System'      },

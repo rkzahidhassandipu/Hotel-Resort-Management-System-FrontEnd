@@ -15,7 +15,6 @@ export default function TwoFactorForm() {
   const setupMutation = useMutation({
     mutationFn: () => authService.setup2fa(),
     onSuccess: (res: any) => {
-      // ব্যাকএন্ডের রেসপন্স স্ট্রাকচার অনুযায়ী ডাটা সেট করা
       const qrData = res.data?.data?.qrCode || res.qrCode;
       setQr(qrData);
     },

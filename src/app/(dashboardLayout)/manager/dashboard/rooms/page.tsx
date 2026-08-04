@@ -19,10 +19,8 @@ import type { Room } from "@/types";
 import { RoomActions } from "@/components/admin/Room/RoomActions";
 import { RoomStats } from "@/components/admin/Room/RoomStats";
 import AddRoomModal from "@/components/admin/Room/AddRoomModal";
-import { ConfirmDeleteDialog } from "@/components/admin/Room/ConfirmDeleteDialog";
 import { UploadImagesDialog } from "@/components/admin/Room/UploadImagesDialog";
 import { AddPricingRuleDialog } from "@/components/admin/Room/AddPricingRuleDialog";
-import { CategoryModal } from "@/components/admin/Room/CategoryModal";
 import { AmenityModal } from "@/components/admin/Room/AmenityModal";
 import EditRoomSheet from "@/components/admin/Room/EditRoomSheetProps";
 
@@ -51,11 +49,9 @@ export default function AdminRoomsPage() {
   // Modal Visibility States
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Room | null>(null); // ← new
-  const [deleteTarget, setDeleteTarget] = useState<Room | null>(null);
   const [imageManagerRoom, setImageManagerRoom] = useState<Room | null>(null);
   const [uploadTarget, setUploadTarget] = useState<Room | null>(null);
   const [pricingTarget, setPricingTarget] = useState<Room | null>(null);
-  const [categoryOpen, setCategoryOpen] = useState(false);
   const [amenityOpen, setAmenityOpen] = useState(false);
 
   // ── Clean Params Logic ───────────────────────────────────────
@@ -104,15 +100,6 @@ export default function AdminRoomsPage() {
     },
   });
 
-  const { mutate: deleteRoom, isPending: isDeleting } = useMutation({
-    mutationFn: (id: string) => roomService.delete(id),
-    onSuccess: () => {
-      toast.success("Room deleted successfully");
-      setDeleteTarget(null);
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
-    },
-    onError: () => toast.error("Could not delete room"),
-  });
 
   // ── Robust Data Extraction ──────────────────────────────────
   const rooms = (() => {
@@ -174,7 +161,6 @@ export default function AdminRoomsPage() {
           }}
           onManageImages={setImageManagerRoom}
           onPricingClick={setPricingTarget}
-          onDeleteClick={setDeleteTarget}
           onSyncAmenities={() => toast.info("Syncing amenities data...")}
         />
       ),
@@ -211,9 +197,7 @@ export default function AdminRoomsPage() {
           >
             <Plus className="mr-2 h-4 w-4" /> Add New Room
           </Button>
-          <Button onClick={() => setCategoryOpen(true)}>
-            Manage Categories
-          </Button>
+          
           <Button onClick={() => setAmenityOpen(true)}>Manage Amenities</Button>
         </div>
       </div>
@@ -279,13 +263,6 @@ export default function AdminRoomsPage() {
         }}
       />
 
-      <ConfirmDeleteDialog
-        open={!!deleteTarget}
-        roomNumber={deleteTarget?.roomNumber ?? ""}
-        onConfirm={() => deleteRoom(deleteTarget!.id)}
-        onCancel={() => setDeleteTarget(null)}
-        isPending={isDeleting}
-      />
       {imageManagerRoom && (
         <UploadImagesDialog
           open={true}
@@ -300,10 +277,6 @@ export default function AdminRoomsPage() {
           onClose={() => setPricingTarget(null)}
         />
       )}
-      <CategoryModal
-        open={categoryOpen}
-        onClose={() => setCategoryOpen(false)}
-      />
       <AmenityModal
         open={amenityOpen}
         amenities={amenitiesRes?.data?.data || []}

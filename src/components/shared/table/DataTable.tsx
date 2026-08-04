@@ -13,7 +13,7 @@ interface Props<T> {
   onSort?: (key: string) => void; sortBy?: string; sortDir?: 'asc' | 'desc';
   onRowClick?: (row: T) => void;
 }
-export default function DataTable<T extends Record<string, unknown>>({
+export default function DataTable<T extends object>({
   data, columns, loading, emptyMessage = 'No data found',
   onSort, sortBy, sortDir, onRowClick,
 }: Props<T>) {
@@ -70,7 +70,9 @@ export default function DataTable<T extends Record<string, unknown>>({
                     className={`px-4 py-3 text-sm font-sans text-white/70 ${col.className || ''}`}
                     onClick={col.noRowClick ? (e) => e.stopPropagation() : undefined}
                   >
-                    {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? '—')}
+                    {col.render
+                      ? col.render((row as Record<string, unknown>)[col.key], row)
+                      : String((row as Record<string, unknown>)[col.key] ?? '—')}
                   </td>
                 ))}
               </tr>

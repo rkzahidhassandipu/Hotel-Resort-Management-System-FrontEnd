@@ -8,7 +8,7 @@ import StatusBadgeCell from '@/components/shared/cell/StatusBadgeCell';
 import DateCell from '@/components/shared/cell/DateCell';
 import StatsCard from '@/components/shared/StatsCard';
 import { maintenanceService } from '@/service/maintenance.service';
-import type { MaintenanceLog } from '@/types';
+import type { MaintenanceLog, MaintenanceStatus } from '@/types';
 import { parseMaintenanceStats } from '@/lib/statsUtils';
 
 export default function MaintenanceRequestsPage() {
@@ -16,7 +16,7 @@ export default function MaintenanceRequestsPage() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MaintenanceLog[]>([]);
   const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<Record<string, number>>({});
+  const [stats, setStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -85,7 +85,7 @@ export default function MaintenanceRequestsPage() {
             values={filters} onChange={(k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1); }} onReset={() => { setFilters({ status: '', priority: '' }); setPage(1); }} />
         </div>
         {loading ? <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/30" /></div> : (
-          <><DataTable data={data} columns={columns} /><DataTablePagination page={page} totalPages={Math.ceil(total / 10)} onPage={setPage} total={total} limit={10} /></>
+          <><DataTable data={data as any} columns={columns as any} /><DataTablePagination page={page} totalPages={Math.ceil(total / 10)} onPage={setPage} total={total} limit={10} /></>
         )}
       </div>
     </div>

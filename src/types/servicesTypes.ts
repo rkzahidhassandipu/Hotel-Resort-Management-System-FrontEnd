@@ -35,3 +35,12 @@ export const fmtDate = (d?: string) =>
 
 export const inputCls = "w-full bg-[#0B0C10] border border-white/8 text-white text-sm font-sans px-3 py-2 rounded-lg outline-none focus:border-[#37EFD1]/40 transition-colors placeholder:text-white/20";
 export const selectCls = `${inputCls} cursor-pointer`;
+
+export interface ServiceRequestFilters {
+  status: string;
+  type: string;
+  priority: string;
+  page: string;
+  limit: string;
+  [key: string]: string;
+}

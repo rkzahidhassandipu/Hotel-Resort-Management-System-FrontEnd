@@ -5,6 +5,7 @@ import { X, Loader2 } from 'lucide-react';
 import { maintenanceService } from '@/service/maintenance.service';
 import { staffService } from '@/service/staff.service';
 import { MaintenanceLog, StaffOption } from '@/types';
+import { userService } from '@/service/user.service';
 
 type Mode = 'create' | 'view';
 
@@ -63,7 +64,7 @@ export default function MaintenanceTicketPanel({ open, mode, ticketId, roomId, o
 
   const loadStaff = async () => {
     try {
-      const res = await staffService.getAll({ role: 'MAINTENANCE,STAFF,MANAGER,ADMIN' });
+      const res = await userService.getAll({ role: 'MAINTENANCE,STAFF,MANAGER,ADMIN' });
       const list = res.data?.data?.data || res.data?.data || [];
       setStaff(list);
     } catch {
@@ -79,7 +80,7 @@ export default function MaintenanceTicketPanel({ open, mode, ticketId, roomId, o
     setSaving(true);
     setError('');
     try {
-      await maintenanceService.create({
+      await maintenanceService.createTicket({
         ...form,
         roomId: form.roomId || undefined,
         location: form.location || undefined,
@@ -101,10 +102,11 @@ export default function MaintenanceTicketPanel({ open, mode, ticketId, roomId, o
     setSaving(true);
     setError('');
     try {
-      await maintenanceService.assign(ticket.id, {
-        assignedToId: assignForm.assignedToId,
-        scheduledAt: assignForm.scheduledAt || undefined,
-      });
+      await maintenanceService.assign(
+        ticket.id,
+        assignForm.assignedToId,
+        assignForm.scheduledAt || undefined
+      );
       onSaved();
       await loadTicket(ticket.id);
     } catch (e: any) {
@@ -139,7 +141,7 @@ export default function MaintenanceTicketPanel({ open, mode, ticketId, roomId, o
     setSaving(true);
     setError('');
     try {
-      await maintenanceService.cancel(ticket.id, { reason: cancelReason || undefined });
+      await maintenanceService.cancel(ticket.id, cancelReason || undefined);
       onSaved();
       onClose();
     } catch (e: any) {

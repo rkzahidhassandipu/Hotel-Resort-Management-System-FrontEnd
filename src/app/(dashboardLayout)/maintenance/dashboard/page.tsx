@@ -120,7 +120,7 @@ export default function MaintenanceRequestsPage() {
           <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/30" /></div>
         ) : (
           <>
-            <DataTable data={data} columns={columns} />
+            <DataTable data={data as any} columns={columns as any} />
             <DataTablePagination page={page} totalPages={Math.ceil(total / 10)} onPage={setPage} total={total} limit={10} />
           </>
         )}

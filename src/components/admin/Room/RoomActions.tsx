@@ -35,8 +35,8 @@ interface RoomActionsProps {
   onStatusChange: (id: string, status: string) => void;
   onManageImages: (room: Room) => void;
   onPricingClick: (room: Room) => void;
-  onDeleteClick: (room: Room) => void;
-  onSyncAmenities: (room: Room) => void;
+  onDeleteClick?: (room: Room) => void;
+  onSyncAmenities: () => void;
 }
 
 export function RoomActions({
@@ -45,7 +45,6 @@ export function RoomActions({
   onStatusChange,
   onManageImages,
   onPricingClick,
-  onDeleteClick,
   onSyncAmenities,
   onEdit,
 }: RoomActionsProps) {
@@ -109,19 +108,14 @@ export function RoomActions({
           Rule
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => onSyncAmenities(room)}
+          onClick={() => onSyncAmenities()}
           className="text-white/70 text-xs cursor-pointer focus:bg-white/5 focus:text-white"
         >
           <Tag className="h-3.5 w-3.5 mr-2 text-white/40" /> Sync Amenities
         </DropdownMenuItem>
 
         <DropdownMenuSeparator className="bg-white/5" />
-        <DropdownMenuItem
-          onClick={() => onDeleteClick(room)}
-          className="text-red-400 hover:text-red-300 focus:bg-red-500/5 text-xs cursor-pointer"
-        >
-          <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Room
-        </DropdownMenuItem>
+        
       </DropdownMenuContent>
     </DropdownMenu>
   );

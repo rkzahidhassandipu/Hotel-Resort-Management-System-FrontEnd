@@ -8,7 +8,7 @@ export const foodService = {
   cancelOrder: (id: string) => httpClient.patch(`/food/orders/${id}/cancel`),
   getMenu: () => httpClient.get('/food/menu'),
   getStats: () => httpClient.get('/food/stats'),
- createMenuItem: (data: FormData) =>
+  createMenuItem: (data: FormData) =>
     httpClient.post('/food/menu/items', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
@@ -16,8 +16,10 @@ export const foodService = {
     httpClient.put(`/food/menu/items/${id}`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  // ✅ simple field update
+  patchMenuItem: (id: string, data: Record<string, unknown>) =>
+    httpClient.patch(`/food/menu/items/${id}`, data),
   deleteMenuItem: (id: string) => httpClient.delete(`/food/menu/items/${id}`),
   createMenuCategory: (data: unknown) => httpClient.post('/food/menu/categories', data),
   updateMenuCategory: (id: string, data: unknown) => httpClient.put(`/food/menu/categories/${id}`, data),
-  
 };

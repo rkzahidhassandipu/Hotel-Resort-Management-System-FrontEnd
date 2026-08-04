@@ -17,6 +17,7 @@ export const roomService = {
   deleteImage:    (id: string, imageId: string)              => httpClient.delete(`/rooms/${id}/images/${imageId}`),
   setPrimaryImage:(id: string, imageId: string)              => httpClient.patch(`/rooms/${id}/images/${imageId}/primary`),
   updateAmenities:(id: string, amenityIds: string[])         => httpClient.put(`/rooms/${id}/amenities`, { amenityIds }),
+  getPricingRules: (id: string) => httpClient.get(`/rooms/${id}/pricing-rules`),
   addPricingRule: (id: string, data: unknown)                => httpClient.post(`/rooms/${id}/pricing-rules`, data),
   deletePricingRule:(id: string, ruleId: string)             => httpClient.delete(`/rooms/${id}/pricing-rules/${ruleId}`),
   createCategory: (data: unknown)                            => httpClient.post('/rooms/categories/new', data),

@@ -14,6 +14,7 @@ import type { FoodOrder } from "@/types";
 import { foodKeys, parseStats } from "@/app/query/Food.queries";
 import { ActionButton, Spinner } from "./Foodui";
 import OrderDetailsSlideOver from "./OrderDetailsSlideOver";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export function OrdersPanel() {
   const queryClient = useQueryClient();
@@ -21,6 +22,8 @@ export function OrdersPanel() {
   const [filters, setFilters] = useState({ status: "" });
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<FoodOrder | null>(null);
+  const { user } = useCurrentUser();
+  const isManager = user?.role === "MANAGER";
 
   const orderParams: Record<string, unknown> = { page, limit: 10 };
   if (search) orderParams.search = search;
@@ -121,7 +124,7 @@ export function OrdersPanel() {
             >
               <Eye size={16} />
             </button>
-            {r.status === "PENDING" && (
+            {r.status === "PENDING" && !isManager && (
               <ActionButton
                 label="Confirm"
                 loading={isStatusBusy}
@@ -153,7 +156,7 @@ export function OrdersPanel() {
                 onClick={() => updateStatus({ id: r.id, status: "DELIVERED" })}
               />
             )}
-            {isCancellable && (
+            {isCancellable && !isManager && (
               <ActionButton
                 label="Cancel"
                 loading={isCancelBusy}

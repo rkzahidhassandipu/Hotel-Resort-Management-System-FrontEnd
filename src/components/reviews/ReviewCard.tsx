@@ -31,6 +31,7 @@ const inputCls = 'w-full bg-[#0B0C10] border border-white/8 text-white text-sm f
 export default function ReviewCard({ review, onUpdated }: {
   review: Review;
   onUpdated: (updated: Review) => void;
+  defaultEditing?: boolean;
 }) {
   const [editing, setEditing]     = useState(false);
   const [rating, setRating]       = useState(review.overallRating);

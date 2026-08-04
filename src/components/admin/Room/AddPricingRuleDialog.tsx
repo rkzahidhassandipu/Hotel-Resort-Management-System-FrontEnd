@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { DollarSign, Loader2, CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { DollarSign, Loader2, CalendarIcon, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { roomService } from "@/service/room.service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -183,6 +183,20 @@ export function AddPricingRuleDialog({ open, roomId, onClose }: AddPricingRuleDi
     setEndDate(undefined);
   };
 
+  // ─────────────────────────────
+  // Fetch existing pricing rules
+  // ─────────────────────────────
+  const { data: rulesRes, isLoading: isLoadingRules } = useQuery({
+    queryKey: ["pricing-rules", roomId],
+    queryFn: () => roomService.getPricingRules(roomId),
+    enabled: open && !!roomId,
+  });
+
+  const rules = rulesRes?.data?.data ?? rulesRes?.data ?? [];
+
+  // ─────────────────────────────
+  // Add rule
+  // ─────────────────────────────
   const { mutate: addRule, isPending } = useMutation({
     mutationFn: () =>
       roomService.addPricingRule(roomId, {
@@ -194,12 +208,27 @@ export function AddPricingRuleDialog({ open, roomId, onClose }: AddPricingRuleDi
       }),
     onSuccess: () => {
       toast.success("Pricing rule added successfully");
+      queryClient.invalidateQueries({ queryKey: ["pricing-rules", roomId] });
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       reset();
-      onClose();
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? "Failed to add pricing rule");
+    },
+  });
+
+  // ─────────────────────────────
+  // Delete rule
+  // ─────────────────────────────
+  const { mutate: removeRule, isPending: isDeleting } = useMutation({
+    mutationFn: (ruleId: string) => roomService.deletePricingRule(roomId, ruleId),
+    onSuccess: () => {
+      toast.success("Pricing rule deleted");
+      queryClient.invalidateQueries({ queryKey: ["pricing-rules", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Failed to delete rule");
     },
   });
 
@@ -221,11 +250,56 @@ export function AddPricingRuleDialog({ open, roomId, onClose }: AddPricingRuleDi
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             <DollarSign className="h-4 w-4 text-[#37EFD1]" />
-            Add Pricing Rule
+            Pricing Rules
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        {/* ─────────────────────────────
+            EXISTING RULES LIST
+        ───────────────────────────── */}
+        {isLoadingRules ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin text-white/30" />
+          </div>
+        ) : rules.length > 0 ? (
+          <div className="space-y-2 mb-2 max-h-40 overflow-y-auto">
+            <Label className="text-white/40 text-[10px] uppercase tracking-wider">
+              Existing Rules
+            </Label>
+            {rules.map((rule: any) => (
+              <div
+                key={rule.id}
+                className="flex items-center justify-between bg-[#0E0F14] border border-white/10 rounded-md px-3 py-2 text-sm"
+              >
+                <div>
+                  <p className="text-white">{rule.name}</p>
+                  <p className="text-white/30 text-xs">
+                    RM {rule.pricePerNight} •{" "}
+                    {new Date(rule.startDate).toLocaleDateString()} –{" "}
+                    {new Date(rule.endDate).toLocaleDateString()}
+                  </p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  disabled={isDeleting}
+                  onClick={() => removeRule(rule.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-red-400" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-xs text-white/30 py-2">
+            No pricing rules yet
+          </p>
+        )}
+
+        {/* ─────────────────────────────
+            ADD NEW RULE FORM
+        ───────────────────────────── */}
+        <div className="space-y-4 py-2 border-t border-white/5 pt-4">
           <div className="space-y-1.5">
             <Label className="text-white/40 text-[10px] uppercase tracking-wider">Rule Name *</Label>
             <Input
@@ -281,7 +355,7 @@ export function AddPricingRuleDialog({ open, roomId, onClose }: AddPricingRuleDi
             disabled={isPending}
             className="border-white/10 text-white/50 hover:bg-white/5 hover:text-white"
           >
-            Cancel
+            Close
           </Button>
           <Button
             onClick={handleSubmit}

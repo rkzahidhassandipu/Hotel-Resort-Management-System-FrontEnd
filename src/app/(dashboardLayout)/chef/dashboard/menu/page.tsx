@@ -41,7 +41,7 @@ export default function ChefMenuPage() {
 
   const toggleAvail = async (id: string, isAvailable: boolean) => {
     setActionLoading(id);
-    try { await foodService.updateMenuItem(id, { isAvailable: !isAvailable }); await fetchData(); } catch {}
+    try { await foodService.patchMenuItem(id, { isAvailable: !isAvailable }); await fetchData(); } catch {}
     setActionLoading(null);
   };
 

@@ -8,7 +8,14 @@ import { foodService } from "@/service/food.service";
 import { MenuItem, MenuItemPayload } from "@/types";
 import { foodKeys, useMenuQuery } from "@/app/query/Food.queries";
 import { MenuItemForm } from "./Menuitemform";
-import { ActiveBadge, EmptyState, IconBtn, SelectField, Spinner } from "./Foodui";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import {
+  ActiveBadge,
+  EmptyState,
+  IconBtn,
+  SelectField,
+  Spinner,
+} from "./Foodui";
 
 export function MenuItemsPanel() {
   const queryClient = useQueryClient();
@@ -17,6 +24,9 @@ export function MenuItemsPanel() {
   const [filterCat, setFilterCat] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const { user } = useCurrentUser();
+  const isChef = user?.role === "CHEF";
+  const isManager = user?.role === "MANAGER";
 
   const { data: menuRaw, isLoading } = useMenuQuery();
 
@@ -40,31 +50,32 @@ export function MenuItemsPanel() {
   });
 
   const updateMutation = useMutation({
-  mutationFn: ({ id, data }: { id: string; data: unknown }) => {
-    console.log("ID:", id);
+    mutationFn: ({ id, data }: { id: string; data: unknown }) => {
+      console.log("ID:", id);
 
-    if (data instanceof FormData) {
-      for (const [key, value] of data.entries()) {
-        console.log(`${key}:`, value);
+      if (data instanceof FormData) {
+        for (const [key, value] of data.entries()) {
+          console.log(`${key}:`, value);
+        }
+      } else {
+        console.log("Data:", data);
       }
-    } else {
-      console.log("Data:", data);
-    }
 
-    return foodService.updateMenuItem(id, data as FormData);
-  },
+      return foodService.updateMenuItem(id, data as FormData);
+    },
 
-  onSuccess: () => {
-    queryClient.invalidateQueries({
-      queryKey: foodKeys.menu(),
-    });
-    setEditing(null);
-  },
-});
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: foodKeys.menu(),
+      });
+      setEditing(null);
+    },
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => foodService.deleteMenuItem(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: foodKeys.menu() }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: foodKeys.menu() }),
   });
 
   function handleSubmit(payload: MenuItemPayload) {
@@ -81,19 +92,28 @@ export function MenuItemsPanel() {
         <div className="flex gap-2 flex-wrap">
           <DataTableSearch
             value={search}
-            onChange={(v) => { setSearch(v); setPage(1); }}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
             placeholder="Search items..."
           />
           <SelectField
             value={filterCat}
-            onChange={(v) => { setFilterCat(v); setPage(1); }}
+            onChange={(v) => {
+              setFilterCat(v);
+              setPage(1);
+            }}
             placeholder="All Categories"
             options={categories.map((c) => ({ label: c.name, value: c.id }))}
             className="w-44"
           />
         </div>
         <button
-          onClick={() => { setEditing(null); setShowForm(true); }}
+          onClick={() => {
+            setEditing(null);
+            setShowForm(true);
+          }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#37EFD1]/10 border border-[#37EFD1]/20 text-[#37EFD1] text-sm hover:bg-[#37EFD1]/20 transition-all"
         >
           <Plus className="h-3.5 w-3.5" /> Add Item
@@ -106,7 +126,10 @@ export function MenuItemsPanel() {
           initial={editing}
           loading={createMutation.isPending || updateMutation.isPending}
           onSubmit={handleSubmit}
-          onCancel={() => { setShowForm(false); setEditing(null); }}
+          onCancel={() => {
+            setShowForm(false);
+            setEditing(null);
+          }}
         />
       )}
 
@@ -120,8 +143,18 @@ export function MenuItemsPanel() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/5">
-                  {["Name", "Category", "Price", "Prep Time", "Available", ""].map((h) => (
-                    <th key={h} className="text-left text-xs text-white/30 font-medium pb-3 pr-4">
+                  {[
+                    "Name",
+                    "Category",
+                    "Price",
+                    "Prep Time",
+                    "Available",
+                    "",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left text-xs text-white/30 font-medium pb-3 pr-4"
+                    >
                       {h}
                     </th>
                   ))}
@@ -129,7 +162,10 @@ export function MenuItemsPanel() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {paged.map((item) => (
-                  <tr key={item.id} className="group hover:bg-white/[0.02] transition-colors">
+                  <tr
+                    key={item.id}
+                    className="group hover:bg-white/[0.02] transition-colors"
+                  >
                     <td className="py-3 pr-4">
                       <p className="text-white font-medium">{item.name}</p>
                       {item.description && (
@@ -150,27 +186,40 @@ export function MenuItemsPanel() {
                       {item.preparationTime ? `${item.preparationTime}m` : "—"}
                     </td>
                     <td className="py-3 pr-4">
-                      <ActiveBadge active={item.isAvailable} on="Available" off="Unavailable" />
+                      <ActiveBadge
+                        active={item.isAvailable}
+                        on="Available"
+                        off="Unavailable"
+                      />
                     </td>
                     <td className="py-3">
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
-                        <IconBtn
-                          icon={<Pencil className="h-3.5 w-3.5" />}
-                          color="#60a5fa"
-                          title="Edit"
-                          onClick={() => { setShowForm(false); setEditing(item); }}
-                        />
-                        <IconBtn
-                          icon={<Trash2 className="h-3.5 w-3.5" />}
-                          color="#f87171"
-                          title="Delete"
-                          loading={
-                            deleteMutation.isPending && deleteMutation.variables === item.id
-                          }
-                          onClick={() => {
-                            if (confirm(`Delete "${item.name}"?`)) deleteMutation.mutate(item.id);
-                          }}
-                        />
+                        {!isManager && (
+                          <IconBtn
+                            icon={<Pencil className="h-3.5 w-3.5" />}
+                            color="#60a5fa"
+                            title="Edit"
+                            onClick={() => {
+                              setShowForm(false);
+                              setEditing(item);
+                            }}
+                          />
+                        )}
+                        {!isChef && (
+                          <IconBtn
+                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                            color="#f87171"
+                            title="Delete"
+                            loading={
+                              deleteMutation.isPending &&
+                              deleteMutation.variables === item.id
+                            }
+                            onClick={() => {
+                              if (confirm(`Delete "${item.name}"?`))
+                                deleteMutation.mutate(item.id);
+                            }}
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>

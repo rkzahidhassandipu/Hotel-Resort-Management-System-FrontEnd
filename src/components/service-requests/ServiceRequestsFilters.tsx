@@ -2,19 +2,11 @@
 import { Filter, X, ChevronDown } from "lucide-react";
 import { STATUS_CFG, SRStatus } from "./shared/StatusBadge";
 import { useState } from "react";
-import { SR_TYPES, selectCls  } from "@/types/servicesTypes";
-
-interface Filters {
-  status: string;
-  type: string;
-  priority: string;
-  page: string;
-  limit: string;
-}
+import { SR_TYPES, selectCls, ServiceRequestFilters } from "@/types/servicesTypes";
 
 interface Props {
-  filters: Filters;
-  onChange: (filters: Filters) => void;
+  filters: ServiceRequestFilters;
+  onChange: (filters: ServiceRequestFilters) => void;
 }
 
 export default function ServiceRequestsFilters({ filters, onChange }: Props) {
@@ -59,7 +51,7 @@ export default function ServiceRequestsFilters({ filters, onChange }: Props) {
             <div key={key} className="min-w-[160px]">
               <label className="text-white/40 text-xs font-sans mb-1.5 block">{label}</label>
               <select
-                value={(filters as Record<string, string>)[key]}
+                value={filters[key]}
                 onChange={e => update(key, e.target.value)}
                 className={selectCls}
               >
